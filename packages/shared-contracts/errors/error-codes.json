@@ -1,0 +1,21 @@
+{
+  "AUTH_INVALID_CREDENTIALS": "账号或密码错误",
+  "AUTH_SESSION_REVOKED": "会话已撤销",
+  "PERMISSION_DENIED": "权限不足",
+  "ENTITLEMENT_LIMIT_EXCEEDED": "套餐额度已用尽",
+  "SKILL_NOT_ALLOWED": "Skill 未被授权",
+  "DATA_SCOPE_DENIED": "数据范围未授权",
+  "EXTERNAL_MODEL_DENIED": "禁止外部模型出网",
+  "TASK_NOT_FOUND": "任务不存在",
+  "TASK_CONFLICT": "任务冲突",
+  "EVIDENCE_NOT_READY": "可靠证据不足",
+  "EVIDENCE_CONFLICTED": "证据冲突",
+  "STRUCTURED_DATA_NOT_FOUND": "无可靠结构化数据",
+  "MODEL_UNAVAILABLE": "模型不可用",
+  "MODEL_SCHEMA_INVALID": "模型输出 Schema 无效",
+  "SYSTEM_DEGRADED": "系统降级",
+  "RATE_LIMITED": "请求过于频繁",
+  "FILE_TYPE_NOT_ALLOWED": "文件类型不允许",
+  "FILE_TOO_LARGE": "文件过大",
+  "FILE_SECURITY_REJECTED": "文件安全校验未通过"
+}

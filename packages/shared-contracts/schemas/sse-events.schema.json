@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SSEEvent",
+  "type": "object",
+  "required": ["event_id", "sequence_no", "task_id", "type", "created_at"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "sequence_no": { "type": "integer" },
+    "task_id": { "type": "string" },
+    "type": { "type": "string" },
+    "stage": { "type": "string" },
+    "progress": { "type": "number", "minimum": 0, "maximum": 1 },
+    "message": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}
