@@ -53,6 +53,36 @@
         }
       }
     },
+    "/api/v1/admin/audit-read": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Audit Read",
+        "operationId": "audit_read_api_v1_admin_audit_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "type": "object",
+                  "title": "Response Audit Read Api V1 Admin Audit Read Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "tags": [
