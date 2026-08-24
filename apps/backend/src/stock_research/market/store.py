@@ -76,7 +76,9 @@ class MarketBarStore:
                 amount=amount,
                 source_event_id=source_event_id,
             )
-            .on_conflict_do_nothing(index_elements=["source_event_id"])
+            # 同时容忍 source_event_id 与 (symbol, period, bar_time) 的唯一冲突，
+            # 避免不同 event_id 但同一根 K 线导致整批消费失败。
+            .on_conflict_do_nothing()
         )
         await self.session.execute(statement)
 
