@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from stock_research.iam.dependencies import require_permission
 from stock_research.market.analysis import MarketAnalysisService
 from stock_research.market.bar_service import MarketBarService
+from stock_research.market.cache import MarketSnapshotCache
+from stock_research.market.dependencies import get_market_snapshot_cache
 from stock_research.market.indicators import IndicatorService
 from stock_research.market.schemas import (
     MarketBarResponse,
@@ -39,8 +41,9 @@ async def market_snapshot_summary(
     limit: int = Query(default=20, ge=1, le=100),
     _: User = Depends(_require_market_read),
     session: AsyncSession = Depends(get_session),
+    cache: MarketSnapshotCache | None = Depends(get_market_snapshot_cache),
 ) -> MarketSnapshotSummaryResponse:
-    summary = await MarketAnalysisService(session).summarize(symbol, limit)
+    summary = await MarketAnalysisService(session, cache=cache).summarize(symbol, limit)
     return MarketSnapshotSummaryResponse(
         symbol=summary.symbol,
         last_price=summary.last_price,
