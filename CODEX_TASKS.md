@@ -49,3 +49,11 @@
 - [x] C1-029 冲突历史导入/归档
 - [x] C1-030 冲突历史自动清理策略
 - [x] C1-031 归档自动清理策略
+- [x] C1-032 Redis Hot Snapshot（行情摘要热读缓存，PostgreSQL 真相源）
+- [x] C1-033 PostgreSQL Minute State（`market_minute_state` 一分钟粒度状态投影）
+- [x] C1-034 Stock Identity Skill（股票代码 / 市场确定性规范化）
+- [x] C1-035 Realtime Snapshot Skill（实时快照读取与 stale 标记）
+- [x] C1-036 Technical Engine / Market Engine（确定性引擎边界）
+- [x] C1-037 Reconnect / Gap Tests（WAL 失败重试、行情缺口检测测试）
+
+P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
