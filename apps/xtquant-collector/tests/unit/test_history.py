@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 
 from xtquant_collector.xtquant import XtQuantBarFetcher, normalize_bar, parse_xt_time
@@ -42,48 +43,20 @@ def test_bar_fetcher_requires_xtquant() -> None:
         XtQuantBarFetcher().fetch(["600519.SH"], "1d")
 
 
-class _FakeFrame:
-    """模拟 XTQuant `get_market_data_ex` 返回的 pandas.DataFrame。"""
-
-    def __init__(self, records: list[tuple[str, dict[str, float]]]) -> None:
-        self.index = [time_label for time_label, _ in records]
-        self._loc = {time_label: row for time_label, row in records}
-
-    @property
-    def loc(self) -> dict[str, dict[str, float]]:
-        return self._loc
-
-
 def test_extract_events_parses_symbol_keyed_frame() -> None:
     fetcher = XtQuantBarFetcher()
-    data = {
-        "600519.SH": _FakeFrame(
-            [
-                (
-                    "20260820",
-                    {
-                        "open": 1299.80,
-                        "high": 1306.88,
-                        "low": 1291.00,
-                        "close": 1291.50,
-                        "volume": 25332.0,
-                        "amount": 3.280474e9,
-                    },
-                ),
-                (
-                    "20260821",
-                    {
-                        "open": 1291.50,
-                        "high": 1291.50,
-                        "low": 1272.01,
-                        "close": 1272.83,
-                        "volume": 33472.0,
-                        "amount": 4.278311e9,
-                    },
-                ),
-            ]
-        )
-    }
+    frame = pd.DataFrame(
+        {
+            "open": [1299.80, 1291.50],
+            "high": [1306.88, 1291.50],
+            "low": [1291.00, 1272.01],
+            "close": [1291.50, 1272.83],
+            "volume": [25332.0, 33472.0],
+            "amount": [3.280474e9, 4.278311e9],
+        },
+        index=[20260820, 20260821],
+    )
+    data = {"600519.SH": frame}
 
     events = fetcher._extract_events(data, ["600519.SH"], "1d")
 
