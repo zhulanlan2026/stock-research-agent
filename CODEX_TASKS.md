@@ -19,5 +19,33 @@
 ## P1 行情 / Technical / Market
 
 - [x] C1-001 XTQuant Collector Skeleton（配置、日志、运行骨架、主入口）
-- [ ] C1-002 SQLite/WAL
-- [ ] C1-003 Ingest API
+- [x] C1-002 SQLite/WAL（采集器本地 `collector-local-wal.sqlite` 持久化缓冲，不替代 PostgreSQL 真相源）
+- [x] C1-003 Ingest API（`POST /api/v1/ingest/events`，事件幂等写入 `inbox_event`）
+- [x] C1-004 WAL -> Ingest Transport（`WALPump` 批量推送、成功后标记 sent、失败保留 pending）
+- [x] C1-005 XTQuant 行情采集适配（`subscribe_quote` 回调 -> 标准化 `QuoteEvent` -> WAL）
+- [x] C1-006 Inbox -> Market Snapshot Consumer（消费 `inbox_event` 写入 `market_snapshot`，后台轮询）
+- [x] C1-007 Market Snapshot Summary（`GET /market/snapshots/{symbol}/summary` 确定性摘要分析）
+- [x] C1-008 前端行情展示（Vue 行情页接入快照列表/摘要 API）
+- [x] C1-009 行情页自动刷新与价格走势图（ECharts）
+- [x] C1-010 多标的行情监控（添加/移除标的、摘要卡片、选中切换）
+- [x] C1-011 历史 K 线聚合与行情异常状态提示（后端 bars API + 前端 K 线图/状态横幅）
+- [x] C1-012 XTQuant 历史 K 线直落标准 bar（`market_bar` + 采集器 `XtQuantBarFetcher`）
+- [x] C1-013 K线成交量副图与采集周期配置校验
+- [x] C1-014 MA/EMA 技术指标与成交量均量线
+- [x] C1-015 MACD/RSI 指标与参数配置
+- [x] C1-016 指标显示开关与参数模板
+- [x] C1-017 指标参数本地持久化与更多预设模板
+- [x] C1-018 指标参数导入/导出与图表主题切换
+- [x] C1-019 多套命名配置方案管理
+- [x] C1-020 方案重命名与默认启动配置
+- [x] C1-021 配置方案整体备份/导入
+- [x] C1-022 指标配置云端同步与更多图表主题
+- [x] C1-023 云端同步冲突提示与自定义主题颜色
+- [x] C1-024 云端冲突精细处理（保留本地/使用云端/合并方案）
+- [x] C1-025 冲突自动合并规则配置
+- [x] C1-026 冲突合并结果预览
+- [x] C1-027 冲突历史记录
+- [x] C1-028 冲突历史导出
+- [x] C1-029 冲突历史导入/归档
+- [x] C1-030 冲突历史自动清理策略
+- [x] C1-031 归档自动清理策略

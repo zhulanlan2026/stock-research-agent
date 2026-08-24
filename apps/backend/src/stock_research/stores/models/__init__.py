@@ -18,11 +18,14 @@ from stock_research.stores.models.iam import (
     MfaFactor,
     Permission,
     Role,
+    RolePermission,
     Session,
     Tenant,
     User,
     UserRole,
 )
+from stock_research.stores.models.market import MarketBar, MarketSnapshot
+from stock_research.stores.models.user_setting import UserSetting
 from stock_research.stores.models.workflow import (
     CheckpointRef,
     InboxEvent,
@@ -44,6 +47,8 @@ __all__ = [
     "Identity",
     "InboxEvent",
     "MfaFactor",
+    "MarketBar",
+    "MarketSnapshot",
     "ModelUsage",
     "OutboxEvent",
     "Permission",
@@ -51,6 +56,7 @@ __all__ = [
     "PolicyDecision",
     "QuotaLedger",
     "Role",
+    "RolePermission",
     "Session",
     "SideEffectReceipt",
     "Subscription",
@@ -58,6 +64,7 @@ __all__ = [
     "TaskVersion",
     "Tenant",
     "User",
+    "UserSetting",
     "UserRole",
     "WorkflowEvent",
 ]

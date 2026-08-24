@@ -6,12 +6,14 @@ from pathlib import Path
 
 import asyncpg  # type: ignore[import-untyped]
 import pytest
+import pytest_asyncio
 from alembic import command
 from alembic.config import Config
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from stock_research.auth.security import hash_password
 from stock_research.core.config import get_settings
+from stock_research.iam.service import PermissionService
 from stock_research.stores.models.iam import Credential, Role, Tenant, User, UserRole
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -56,7 +58,7 @@ async def _drop_database(database: str) -> None:
         await conn.close()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_context() -> AsyncIterator[TestDbContext]:
     database = f"stock_research_test_{uuid.uuid4().hex[:8]}"
     try:
@@ -98,6 +100,7 @@ async def db_context() -> AsyncIterator[TestDbContext]:
         role = Role(tenant_id=tenant.id, code="ADMIN", name="ADMIN", is_system=True)
         session.add(role)
         await session.flush()
+        await PermissionService(session).ensure_role_permissions(role, "ADMIN")
         session.add(UserRole(user_id=user.id, role_id=role.id, tenant_id=tenant.id))
 
         free_user = User(
@@ -113,6 +116,7 @@ async def db_context() -> AsyncIterator[TestDbContext]:
         free_role = Role(tenant_id=tenant.id, code="FREE_USER", name="FREE_USER", is_system=False)
         session.add(free_role)
         await session.flush()
+        await PermissionService(session).ensure_role_permissions(free_role, "FREE_USER")
         session.add(UserRole(user_id=free_user.id, role_id=free_role.id, tenant_id=tenant.id))
         await session.commit()
 

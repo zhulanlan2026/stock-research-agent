@@ -16,7 +16,11 @@ async function logout(): Promise<void> {
   <div class="layout">
     <header class="topbar">
       <span>stock-research-platform</span>
-      <button type="button" @click="logout">退出</button>
+      <nav class="nav">
+        <router-link to="/">工作台</router-link>
+        <router-link to="/market">行情</router-link>
+        <button type="button" @click="logout">退出</button>
+      </nav>
     </header>
     <main class="content">
       <router-view />
@@ -33,9 +37,16 @@ async function logout(): Promise<void> {
 
 .topbar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .content {

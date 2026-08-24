@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from stock_research.auth.security import hash_password
 from stock_research.core.config import get_settings
+from stock_research.iam.service import PermissionService
 from stock_research.stores.models.iam import Credential, Role, Tenant, User, UserRole
 
 
@@ -59,6 +60,7 @@ async def seed(email: str, password: str, role_code: str, tenant_slug: str) -> N
             )
             session.add(role)
             await session.flush()
+        await PermissionService(session).ensure_role_permissions(role, role_code)
 
         user_role = (
             await session.execute(

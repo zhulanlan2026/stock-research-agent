@@ -17,6 +17,10 @@ const router = createRouter({
           path: '',
           component: () => import('../app/DashboardView.vue'),
         },
+        {
+          path: 'market',
+          component: () => import('../app/MarketView.vue'),
+        },
       ],
     },
   ],

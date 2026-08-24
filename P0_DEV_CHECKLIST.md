@@ -111,9 +111,9 @@ git diff --exit-code -- packages/shared-contracts/openapi/openapi.json packages/
 - [x] `POST /research/tasks` 的 `Idempotency-Key`
 - [x] `scripts/seed_dev_user.py`
 - [x] CI 增加 `bandit`、`pip-audit`、`npm audit`
-- [ ] RBAC role_permission 存法决策（代码映射 or 加表）
-- [ ] Refresh Cookie 生产环境开启 `Secure`
-- [ ] 生产环境注入 `JWT_SECRET_KEY`
+- [x] RBAC role_permission 存法决策：采用 `role_permission` 关联表，PostgreSQL 为真相源
+- [x] Refresh Cookie 生产环境开启 `Secure`：`APP_ENV=production` 时强制校验
+- [x] 生产环境注入 `JWT_SECRET_KEY`：`APP_ENV=production` 时强制校验
 
 ## 9. 已补齐的集成测试
 

@@ -140,6 +140,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ingest/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ingest Events */
+        post: operations["ingest_events_api_v1_ingest_events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/snapshots/{symbol}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Market Snapshots */
+        get: operations["list_market_snapshots_api_v1_market_snapshots__symbol__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/snapshots/{symbol}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Market Snapshot Summary */
+        get: operations["market_snapshot_summary_api_v1_market_snapshots__symbol__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/bars/{symbol}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Market Bars */
+        get: operations["list_market_bars_api_v1_market_bars__symbol__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/bars/{symbol}/indicators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Market Indicators */
+        get: operations["list_market_indicators_api_v1_market_bars__symbol__indicators_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/user-settings/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get User Setting */
+        get: operations["get_user_setting_api_v1_user_settings__key__get"];
+        /** Put User Setting */
+        put: operations["put_user_setting_api_v1_user_settings__key__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/research/tasks": {
         parameters: {
             query?: never;
@@ -200,6 +303,29 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** IngestBatchRequest */
+        IngestBatchRequest: {
+            /** Events */
+            events: components["schemas"]["IngestEvent"][];
+        };
+        /** IngestBatchResponse */
+        IngestBatchResponse: {
+            /** Accepted */
+            accepted: number;
+            /** Duplicates */
+            duplicates: number;
+        };
+        /** IngestEvent */
+        IngestEvent: {
+            /** Event Id */
+            event_id: string;
+            /** Event Type */
+            event_type: string;
+            /** Payload */
+            payload?: {
+                [key: string]: unknown;
+            };
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Email */
@@ -221,6 +347,94 @@ export interface components {
             /** Expires In */
             expires_in: number;
             user: components["schemas"]["UserMe"];
+        };
+        /** MarketBarResponse */
+        MarketBarResponse: {
+            /**
+             * Time
+             * Format: date-time
+             */
+            time: string;
+            /** Open */
+            open: number;
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+            /** Close */
+            close: number;
+            /** Volume */
+            volume: number | null;
+        };
+        /** MarketIndicatorResponse */
+        MarketIndicatorResponse: {
+            /**
+             * Time
+             * Format: date-time
+             */
+            time: string;
+            /** Ma5 */
+            ma5: number | null;
+            /** Ma10 */
+            ma10: number | null;
+            /** Ma20 */
+            ma20: number | null;
+            /** Ema5 */
+            ema5: number | null;
+            /** Ema10 */
+            ema10: number | null;
+            /** Ema20 */
+            ema20: number | null;
+            /** Volume Ma5 */
+            volume_ma5: number | null;
+            /** Volume Ma10 */
+            volume_ma10: number | null;
+            /** Macd Dif */
+            macd_dif: number | null;
+            /** Macd Dea */
+            macd_dea: number | null;
+            /** Macd Hist */
+            macd_hist: number | null;
+            /** Rsi */
+            rsi: number | null;
+        };
+        /** MarketSnapshotResponse */
+        MarketSnapshotResponse: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * Event Time
+             * Format: date-time
+             */
+            event_time: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** MarketSnapshotSummaryResponse */
+        MarketSnapshotSummaryResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Last Price */
+            last_price: number | null;
+            /** Previous Close */
+            previous_close: number | null;
+            /** Change */
+            change: number | null;
+            /** Change Pct */
+            change_pct: number | null;
+            /** Bid Ask Spread */
+            bid_ask_spread: number | null;
+            /** Event Time */
+            event_time: string | null;
+            /** Sample Count */
+            sample_count: number;
         };
         /** TaskCreateRequest */
         TaskCreateRequest: {
@@ -293,6 +507,27 @@ export interface components {
             email: string;
             /** Display Name */
             display_name: string | null;
+        };
+        /** UserSettingResponse */
+        UserSettingResponse: {
+            /** Key */
+            key: string;
+            /** Value */
+            value: {
+                [key: string]: unknown;
+            };
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** UserSettingValueRequest */
+        UserSettingValueRequest: {
+            /** Value */
+            value: {
+                [key: string]: unknown;
+            };
         };
         /** ValidationError */
         ValidationError: {
@@ -489,6 +724,245 @@ export interface operations {
                 };
                 content: {
                     "application/json": string[];
+                };
+            };
+        };
+    };
+    ingest_events_api_v1_ingest_events_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Collector-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IngestBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestBatchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_market_snapshots_api_v1_market_snapshots__symbol__get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketSnapshotResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    market_snapshot_summary_api_v1_market_snapshots__symbol__summary_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketSnapshotSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_market_bars_api_v1_market_bars__symbol__get: {
+        parameters: {
+            query?: {
+                period?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketBarResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_market_indicators_api_v1_market_bars__symbol__indicators_get: {
+        parameters: {
+            query?: {
+                period?: string;
+                limit?: number;
+                rsi_period?: number;
+                macd_fast?: number;
+                macd_slow?: number;
+                macd_signal?: number;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketIndicatorResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_setting_api_v1_user_settings__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSettingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_user_setting_api_v1_user_settings__key__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UserSettingValueRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSettingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

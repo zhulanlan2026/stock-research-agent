@@ -96,6 +96,13 @@ class UserRole(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tenant.id"), index=True)
 
 
+class RolePermission(Base):
+    __tablename__ = "role_permission"
+
+    role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("role.id"), primary_key=True)
+    permission_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("permission.id"), primary_key=True)
+
+
 class MfaFactor(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "mfa_factor"
 

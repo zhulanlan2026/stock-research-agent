@@ -1,6 +1,10 @@
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEV_JWT_SECRET_KEY = "dev-only-change-me-dev-only-change-me-1234567890"
+DEV_COLLECTOR_INGEST_TOKEN = "dev-collector-token-change-me"
 
 
 class Settings(BaseSettings):
@@ -18,7 +22,8 @@ class Settings(BaseSettings):
     minio_secret_key: str = "minioadmin123"
     minio_secure: bool = False
 
-    jwt_secret_key: str = "dev-only-change-me-dev-only-change-me-1234567890"
+    collector_ingest_token: str = DEV_COLLECTOR_INGEST_TOKEN
+    jwt_secret_key: str = DEV_JWT_SECRET_KEY
     jwt_algorithm: str = "HS256"
     jwt_issuer: str = "stock-research"
     jwt_audience: str = "stock-research-web"
@@ -26,10 +31,37 @@ class Settings(BaseSettings):
     refresh_token_ttl_days: int = 14
     refresh_cookie_name: str = "refresh_token"
     refresh_cookie_secure: bool = False
+    market_consume_interval_seconds: float = 1.0
 
     @property
     def is_development(self) -> bool:
         return self.app_env == "development"
+
+    @model_validator(mode="after")
+    def _validate_production_secrets(self) -> "Settings":
+        if self.app_env != "production":
+            if not self.jwt_secret_key:
+                self.jwt_secret_key = DEV_JWT_SECRET_KEY
+            if not self.collector_ingest_token:
+                self.collector_ingest_token = DEV_COLLECTOR_INGEST_TOKEN
+            return self
+
+        if not self.refresh_cookie_secure:
+            raise ValueError("REFRESH_COOKIE_SECURE must be true when APP_ENV=production")
+        if self.jwt_secret_key == DEV_JWT_SECRET_KEY or len(self.jwt_secret_key) < 32:
+            raise ValueError(
+                "JWT_SECRET_KEY must be injected with a non-development value "
+                "of at least 32 characters when APP_ENV=production"
+            )
+        if (
+            self.collector_ingest_token == DEV_COLLECTOR_INGEST_TOKEN
+            or len(self.collector_ingest_token) < 32
+        ):
+            raise ValueError(
+                "COLLECTOR_INGEST_TOKEN must be injected with a non-development value "
+                "of at least 32 characters when APP_ENV=production"
+            )
+        return self
 
 
 @lru_cache
