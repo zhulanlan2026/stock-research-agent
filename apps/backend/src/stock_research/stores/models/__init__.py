@@ -24,7 +24,7 @@ from stock_research.stores.models.iam import (
     User,
     UserRole,
 )
-from stock_research.stores.models.market import MarketBar, MarketSnapshot
+from stock_research.stores.models.market import MarketBar, MarketMinuteState, MarketSnapshot
 from stock_research.stores.models.user_setting import UserSetting
 from stock_research.stores.models.workflow import (
     CheckpointRef,
@@ -48,6 +48,7 @@ __all__ = [
     "InboxEvent",
     "MfaFactor",
     "MarketBar",
+    "MarketMinuteState",
     "MarketSnapshot",
     "ModelUsage",
     "OutboxEvent",

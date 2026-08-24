@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from stock_research.market.store import MarketBarStore, MarketSnapshotStore
+from stock_research.market.store import MarketBarStore, MarketMinuteStateStore, MarketSnapshotStore
 from stock_research.stores.models.workflow import InboxEvent
 
 CONSUMABLE_EVENT_TYPES = frozenset({"market.quote", "market.snapshot", "market.bar"})
@@ -14,6 +14,7 @@ class MarketDataConsumer:
         self.session = session
         self.store = MarketSnapshotStore(session)
         self.bar_store = MarketBarStore(session)
+        self.minute_store = MarketMinuteStateStore(session)
 
     async def consume_pending(self, limit: int = 100) -> int:
         result = await self.session.execute(
@@ -40,6 +41,12 @@ class MarketDataConsumer:
         symbol = str(payload.get("symbol") or "UNKNOWN")
         event_time = _event_time(payload, event.received_at)
         await self.store.upsert_from_inbox(
+            source_event_id=event.event_id,
+            symbol=symbol,
+            event_time=event_time,
+            payload=payload,
+        )
+        await self.minute_store.upsert_from_snapshot(
             source_event_id=event.event_id,
             symbol=symbol,
             event_time=event_time,

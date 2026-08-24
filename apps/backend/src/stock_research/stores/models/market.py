@@ -36,3 +36,17 @@ class MarketBar(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     volume: Mapped[float | None] = mapped_column(nullable=True)
     amount: Mapped[float | None] = mapped_column(nullable=True)
     source_event_id: Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
+
+
+class MarketMinuteState(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "market_minute_state"
+    __table_args__ = (
+        UniqueConstraint("symbol", "as_of_minute", name="uq_market_minute_state_symbol_minute"),
+    )
+
+    symbol: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    as_of_minute: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True, nullable=False
+    )
+    source_event_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    payload: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict, nullable=False)

@@ -5,6 +5,7 @@ from sqlalchemy import select
 
 from stock_research.market.consumer import MarketDataConsumer
 from stock_research.market.store import MarketBarStore, MarketSnapshotStore
+from stock_research.stores.models.market import MarketMinuteState
 from stock_research.stores.models.workflow import InboxEvent
 
 
@@ -29,6 +30,14 @@ async def test_consume_pending_persists_snapshot_and_marks_processed(
         assert len(snapshots) == 1
         assert snapshots[0].source_event_id == "evt-1"
         assert snapshots[0].payload["lastPrice"] == 9.2
+
+        minute_state = (
+            await session.execute(
+                select(MarketMinuteState).where(MarketMinuteState.symbol == "600519.SH")
+            )
+        ).scalar_one()
+        assert minute_state.as_of_minute.minute == snapshots[0].event_time.minute
+        assert minute_state.payload["lastPrice"] == 9.2
 
         inbox = (
             await session.execute(select(InboxEvent).where(InboxEvent.event_id == "evt-1"))

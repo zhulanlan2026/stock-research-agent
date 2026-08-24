@@ -1,11 +1,11 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from stock_research.stores.models.market import MarketBar, MarketSnapshot
+from stock_research.stores.models.market import MarketBar, MarketMinuteState, MarketSnapshot
 
 
 class MarketSnapshotStore:
@@ -87,6 +87,51 @@ class MarketBarStore:
             select(MarketBar)
             .where(MarketBar.symbol == symbol, MarketBar.period == period)
             .order_by(MarketBar.bar_time.asc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+
+class MarketMinuteStateStore:
+    """按 symbol + as_of_minute 维护一分钟粒度的确定性状态投影。"""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def upsert_from_snapshot(
+        self,
+        *,
+        source_event_id: str,
+        symbol: str,
+        event_time: datetime,
+        payload: dict[str, object],
+    ) -> None:
+        as_of_minute = event_time.replace(second=0, microsecond=0)
+        statement = (
+            pg_insert(MarketMinuteState)
+            .values(
+                id=uuid.uuid4(),
+                symbol=symbol,
+                as_of_minute=as_of_minute,
+                source_event_id=source_event_id,
+                payload=payload,
+            )
+            .on_conflict_do_update(
+                index_elements=["symbol", "as_of_minute"],
+                set_={
+                    "source_event_id": source_event_id,
+                    "payload": payload,
+                    "updated_at": datetime.now(timezone.utc),
+                },
+            )
+        )
+        await self.session.execute(statement)
+
+    async def latest(self, symbol: str, limit: int = 20) -> list[MarketMinuteState]:
+        result = await self.session.execute(
+            select(MarketMinuteState)
+            .where(MarketMinuteState.symbol == symbol)
+            .order_by(MarketMinuteState.as_of_minute.desc())
             .limit(limit)
         )
         return list(result.scalars().all())
