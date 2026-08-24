@@ -17,7 +17,9 @@ class IngestClient:
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.token = token
-        self._client = httpx.AsyncClient(transport=transport, timeout=10.0)
+        # 采集器只访问本机后端，必须忽略系统/环境代理，避免 Windows 系统代理
+        # 把 localhost 请求误路由到外部代理（表现为 502 Bad Gateway）。
+        self._client = httpx.AsyncClient(transport=transport, timeout=10.0, trust_env=False)
 
     async def send(self, entries: list[WalEntry]) -> tuple[int, int]:
         if not entries:

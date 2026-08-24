@@ -49,6 +49,13 @@ async def test_ingest_client_sends_expected_payload(tmp_path: Path) -> None:
     await client.aclose()
 
 
+async def test_ingest_client_disables_environment_proxies() -> None:
+    client = IngestClient("http://localhost:8000/api/v1", "test-token")
+
+    assert client._client.trust_env is False
+    await client.aclose()
+
+
 async def test_wal_pump_marks_sent_on_success(tmp_path: Path) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(202, json={"accepted": 2, "duplicates": 0})
