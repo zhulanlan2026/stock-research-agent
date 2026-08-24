@@ -103,40 +103,28 @@ class XtQuantBarFetcher:
             return []
 
         events: list[BarEvent] = []
-        open_frame = data.get("open")
-        if open_frame is None:
-            return events
-
         for symbol in symbols:
-            try:
-                open_series = open_frame.loc[symbol]
-            except Exception:
+            # XTQuant `get_market_data_ex` 多字段返回结构为
+            # {symbol: DataFrame(index=时间标签, columns=字段名)}。
+            frame = data.get(symbol)
+            if frame is None:
                 continue
 
-            for time_label in open_series.index:
+            for time_label in frame.index:
                 try:
+                    row = frame.loc[time_label]
                     time_ms = parse_xt_time(str(time_label))
-                    open_price = float(open_series[time_label])
-                    high = float(data["high"].loc[symbol][time_label])
-                    low = float(data["low"].loc[symbol][time_label])
-                    close = float(data["close"].loc[symbol][time_label])
+                    open_price = float(row["open"])
+                    high = float(row["high"])
+                    low = float(row["low"])
+                    close = float(row["close"])
                     if not all(
                         math.isfinite(value)
                         for value in (open_price, high, low, close)
                     ):
                         continue
-                    volume_value = data.get("volume")
-                    amount_value = data.get("amount")
-                    volume = (
-                        _nullable_float(volume_value.loc[symbol][time_label])
-                        if volume_value is not None
-                        else None
-                    )
-                    amount = (
-                        _nullable_float(amount_value.loc[symbol][time_label])
-                        if amount_value is not None
-                        else None
-                    )
+                    volume = _nullable_float(row.get("volume"))
+                    amount = _nullable_float(row.get("amount"))
                 except Exception:
                     continue
 

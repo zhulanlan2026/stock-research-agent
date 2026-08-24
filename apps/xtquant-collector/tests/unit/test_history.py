@@ -40,3 +40,56 @@ def test_parse_xt_time() -> None:
 def test_bar_fetcher_requires_xtquant() -> None:
     with pytest.raises(RuntimeError, match="xtquant is not installed"):
         XtQuantBarFetcher().fetch(["600519.SH"], "1d")
+
+
+class _FakeFrame:
+    """模拟 XTQuant `get_market_data_ex` 返回的 pandas.DataFrame。"""
+
+    def __init__(self, records: list[tuple[str, dict[str, float]]]) -> None:
+        self.index = [time_label for time_label, _ in records]
+        self._loc = {time_label: row for time_label, row in records}
+
+    @property
+    def loc(self) -> dict[str, dict[str, float]]:
+        return self._loc
+
+
+def test_extract_events_parses_symbol_keyed_frame() -> None:
+    fetcher = XtQuantBarFetcher()
+    data = {
+        "600519.SH": _FakeFrame(
+            [
+                (
+                    "20260820",
+                    {
+                        "open": 1299.80,
+                        "high": 1306.88,
+                        "low": 1291.00,
+                        "close": 1291.50,
+                        "volume": 25332.0,
+                        "amount": 3.280474e9,
+                    },
+                ),
+                (
+                    "20260821",
+                    {
+                        "open": 1291.50,
+                        "high": 1291.50,
+                        "low": 1272.01,
+                        "close": 1272.83,
+                        "volume": 33472.0,
+                        "amount": 4.278311e9,
+                    },
+                ),
+            ]
+        )
+    }
+
+    events = fetcher._extract_events(data, ["600519.SH"], "1d")
+
+    assert len(events) == 2
+    assert events[0].event_type == "market.bar"
+    assert events[0].payload["symbol"] == "600519.SH"
+    assert events[0].payload["close"] == 1291.50
+    assert events[0].payload["volume"] == 25332.0
+    assert events[0].payload["time"] == 1787184000000
