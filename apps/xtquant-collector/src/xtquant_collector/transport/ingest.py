@@ -60,7 +60,12 @@ class WALPump:
         if not entries:
             return 0
 
-        accepted, duplicates = await self.client.send(entries)
+        try:
+            accepted, duplicates = await self.client.send(entries)
+        except httpx.HTTPError:
+            for entry in entries:
+                self.wal.mark_failed(entry.event_id)
+            raise
         if accepted + duplicates == len(entries):
             for entry in entries:
                 self.wal.mark_sent(entry.event_id)

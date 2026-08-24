@@ -97,6 +97,18 @@ class WalStore:
                 (_utcnow_iso(), event_id),
             )
 
+    def mark_failed(self, event_id: str) -> None:
+        """发送失败时保留 pending 并累加 attempts，供后续重连重试。"""
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE collector_outbox
+                SET attempts = attempts + 1, status = 'pending'
+                WHERE event_id = ? AND status = 'pending'
+                """,
+                (event_id,),
+            )
+
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.path)
         conn.row_factory = sqlite3.Row

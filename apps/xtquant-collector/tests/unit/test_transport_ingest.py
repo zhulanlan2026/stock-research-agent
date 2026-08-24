@@ -90,3 +90,24 @@ async def test_wal_pump_keeps_pending_on_error(tmp_path: Path) -> None:
 
     assert len(wal.list_pending()) == 2
     await client.aclose()
+
+
+async def test_wal_pump_increments_attempts_on_error(tmp_path: Path) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503, json={"error": "unavailable"})
+
+    wal = _wal_with_pending(tmp_path, count=1)
+    client = IngestClient(
+        "http://localhost:8000/api/v1",
+        "test-token",
+        transport=httpx.MockTransport(handler),
+    )
+    pump = WALPump(wal, client)
+
+    with pytest.raises(httpx.HTTPStatusError):
+        await pump.drain_once()
+
+    pending = wal.list_pending()
+    assert len(pending) == 1
+    assert pending[0].attempts == 1
+    await client.aclose()

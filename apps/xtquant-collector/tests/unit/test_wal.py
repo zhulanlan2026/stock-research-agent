@@ -33,6 +33,19 @@ def test_mark_sent(wal_path: Path) -> None:
     assert store.list_pending() == []
 
 
+def test_mark_failed_increments_attempts_and_keeps_pending(wal_path: Path) -> None:
+    store = WalStore(wal_path)
+    store.initialize()
+
+    store.append("evt-1", "market.snapshot", {"symbol": "600519.SH"})
+    store.mark_failed("evt-1")
+    store.mark_failed("evt-1")
+
+    pending = store.list_pending()
+    assert len(pending) == 1
+    assert pending[0].attempts == 2
+
+
 def test_pending_is_ordered_by_insertion(wal_path: Path) -> None:
     store = WalStore(wal_path)
     store.initialize()
