@@ -45,6 +45,11 @@ async def seed(email: str, password: str, role_code: str, tenant_slug: str) -> N
         ).scalar_one_or_none()
         if credential is None:
             session.add(Credential(user_id=user.id, password_hash=hash_password(password)))
+        else:
+            # 已存在则覆盖密码并清空锁定状态，保证 seed 幂等且密码与参数一致。
+            credential.password_hash = hash_password(password)
+            credential.failed_attempts = 0
+            credential.locked_until = None
 
         role = (
             await session.execute(
