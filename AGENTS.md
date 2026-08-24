@@ -2,6 +2,8 @@
 
 本仓库的开发以《MiniQMT_智能研股系统_V2.0_最终技术方案_Codex开发执行版.md》为唯一技术基线。
 
+知识库 / 文档处理 / 检索的执行级补充见 `docs/architecture/knowledge-base.md`，决策记录见 `docs/adr/0001-knowledge-base-retrieval-optimization.md`。
+
 Agent 执行规则：
 
 - 一次只执行一个明确的任务 ID 或小批次。
