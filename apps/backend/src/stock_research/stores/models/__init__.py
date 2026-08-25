@@ -11,6 +11,7 @@ from stock_research.stores.models.entitlement import (
     QuotaLedger,
     Subscription,
 )
+from stock_research.stores.models.fundamental import FinancialFact
 from stock_research.stores.models.iam import (
     Credential,
     Device,
@@ -44,6 +45,7 @@ __all__ = [
     "DataAccessLog",
     "Device",
     "EntitlementEvent",
+    "FinancialFact",
     "Identity",
     "InboxEvent",
     "MfaFactor",
