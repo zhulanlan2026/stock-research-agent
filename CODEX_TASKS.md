@@ -57,3 +57,19 @@
 - [x] C1-037 Reconnect / Gap Tests（WAL 失败重试、行情缺口检测测试）
 
 P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
+
+## P2 Fundamental / Risk / Report
+
+- [x] C2-001 financial_fact（点时间财务事实存储）
+- [x] C2-002 PIT Resolver（按 as_of 解析最新可用口径）
+- [ ] C2-003 Fundamental
+- [ ] C2-004 CPA/Quality
+- [ ] C2-005 Peer
+- [ ] C2-006 Valuation
+- [ ] C2-007 Risk
+- [ ] C2-008 Scenario
+- [ ] C2-009 Decision
+- [ ] C2-010 Snapshot
+- [ ] C2-011 Standard Research
+- [ ] C2-012 Report
+- [ ] C2-013 Risk Replay
