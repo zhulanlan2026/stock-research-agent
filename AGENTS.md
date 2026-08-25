@@ -4,6 +4,8 @@
 
 知识库 / 文档处理 / 检索的执行级补充见 `docs/architecture/knowledge-base.md`，决策记录见 `docs/adr/0001-knowledge-base-retrieval-optimization.md`。
 
+上下文记忆 / Checkpoint 执行级补充见 `docs/architecture/context-memory.md`，决策记录见 `docs/adr/0002-context-memory-redis-postgres-checkpoint.md`。
+
 Agent 执行规则：
 
 - 一次只执行一个明确的任务 ID 或小批次。
