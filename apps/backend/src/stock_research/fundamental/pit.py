@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +15,7 @@ class ResolvedFinancialFact:
     symbol: str
     metric: str
     period: str
-    value: object
+    value: Decimal
     unit: str
     source_id: str
     disclosed_at: datetime

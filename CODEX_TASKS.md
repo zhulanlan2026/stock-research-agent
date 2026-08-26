@@ -62,7 +62,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 
 - [x] C2-001 financial_fact（点时间财务事实存储）
 - [x] C2-002 PIT Resolver（按 as_of 解析最新可用口径）
-- [ ] C2-003 Fundamental
+- [x] C2-003 Fundamental（PIT 财务事实 -> 确定性基本面快照与比率）
 - [ ] C2-004 CPA/Quality
 - [ ] C2-005 Peer
 - [ ] C2-006 Valuation
