@@ -69,7 +69,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C2-007 Risk（财务杠杆 / 流动性 / 现金流覆盖 / 波动回撤风险）
 - [x] C2-008 Scenario（估值场景目标价 / 隐含涨跌幅）
 - [x] C2-009 Decision（Risk + Scenario -> AVOID / HOLD / ATTRACTIVE）
-- [ ] C2-010 Snapshot
+- [x] C2-010 Snapshot（统一聚合各确定性引擎快照）
 - [ ] C2-011 Standard Research
 - [ ] C2-012 Report
 - [ ] C2-013 Risk Replay
