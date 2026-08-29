@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.documents.dependencies import get_raw_object_store
+from stock_research.documents.parser_router import ParserRouter
 from stock_research.documents.schemas import DocumentUploadResponse
 from stock_research.documents.security import FileSecurityService
 from stock_research.documents.storage import RawObjectStore
@@ -49,6 +50,7 @@ async def upload_file(
 
     content_hash = security.content_hash
     safe_filename = security.sanitized_filename
+    parser_route = ParserRouter().route(safe_filename)
     object_key = f"{current_user.tenant_id}/{uuid.uuid4()}/{safe_filename}"
 
     await object_store.put_object(
@@ -64,6 +66,8 @@ async def upload_file(
         document_type=document_type,
         content_hash=content_hash,
         raw_object_key=object_key,
+        parser=parser_route.parser,
+        parser_version=parser_route.parser_version,
     )
     await session.commit()
 

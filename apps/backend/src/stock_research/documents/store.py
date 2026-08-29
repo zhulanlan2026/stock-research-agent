@@ -21,6 +21,8 @@ class DocumentStore:
         symbol: str | None = None,
         source_level: str | None = None,
         external_model_allowed: bool = False,
+        parser: str | None = None,
+        parser_version: str | None = None,
     ) -> tuple[Document, DocumentVersion]:
         document = Document(
             tenant_id=tenant_id,
@@ -39,6 +41,8 @@ class DocumentStore:
             document_id=document.id,
             version_no=1,
             raw_object_key=raw_object_key,
+            parser=parser,
+            parser_version=parser_version,
             status="UPLOADED",
             uploaded_at=datetime.now(timezone.utc),
         )
