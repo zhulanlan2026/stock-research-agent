@@ -71,5 +71,5 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C2-009 Decision（Risk + Scenario -> AVOID / HOLD / ATTRACTIVE）
 - [x] C2-010 Snapshot（统一聚合各确定性引擎快照）
 - [x] C2-011 Standard Research（统一快照 + 同业比较研究服务）
-- [ ] C2-012 Report
-- [ ] C2-013 Risk Replay
+- [x] C2-012 Report（确定性结构化报告渲染）
+- [x] C2-013 Risk Replay（多时点 PIT 风险回放与可复现性）
