@@ -18,6 +18,7 @@ from stock_research.core.exception_handlers import (
 )
 from stock_research.core.logging import configure_logging
 from stock_research.core.middleware import RequestContextMiddleware
+from stock_research.documents.router import router as documents_router
 from stock_research.iam.router import router as iam_router
 from stock_research.ingest.router import router as ingest_router
 from stock_research.market.consumer import MarketDataConsumer
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix="/health", tags=["health"])
     app.include_router(admin_router, prefix=settings.api_v1_prefix)
     app.include_router(auth_router, prefix=settings.api_v1_prefix)
+    app.include_router(documents_router, prefix=settings.api_v1_prefix)
     app.include_router(iam_router, prefix=settings.api_v1_prefix)
     app.include_router(ingest_router, prefix=settings.api_v1_prefix)
     app.include_router(market_router, prefix=settings.api_v1_prefix)

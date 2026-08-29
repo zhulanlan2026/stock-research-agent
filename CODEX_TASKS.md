@@ -73,3 +73,25 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C2-011 Standard Research（统一快照 + 同业比较研究服务）
 - [x] C2-012 Report（确定性结构化报告渲染）
 - [x] C2-013 Risk Replay（多时点 PIT 风险回放与可复现性）
+
+## P3 Document / Evidence / Retrieval
+
+- [x] C3-001 Upload（文件上传、原始内容写入 MinIO、Document/Version 落库）
+- [ ] C3-002 MinIO Raw
+- [ ] C3-003 File Security
+- [ ] C3-004 Parser Router
+- [ ] C3-005 MinerU
+- [ ] C3-006 DOCX
+- [ ] C3-007 XLSX
+- [ ] C3-008 HTML
+- [ ] C3-009 Normalized Block
+- [ ] C3-010 Chunk
+- [ ] C3-011 Evidence/Claim Draft
+- [ ] C3-012 BM25
+- [ ] C3-013 Dense
+- [ ] C3-014 ACL
+- [ ] C3-015 RRF
+- [ ] C3-016 Reranker
+- [ ] C3-017 Evidence Pack
+- [ ] C3-018 Citation UI/API
+- [ ] C3-019 Golden Dataset
