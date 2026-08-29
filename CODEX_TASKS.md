@@ -65,7 +65,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C2-003 Fundamental（PIT 财务事实 -> 确定性基本面快照与比率）
 - [x] C2-004 CPA/Quality
 - [x] C2-005 Peer
-- [ ] C2-006 Valuation
+- [x] C2-006 Valuation
 - [ ] C2-007 Risk
 - [ ] C2-008 Scenario
 - [ ] C2-009 Decision
