@@ -78,7 +78,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 
 - [x] C3-001 Upload（文件上传、原始内容写入 MinIO、Document/Version 落库）
 - [x] C3-002 MinIO Raw（原始对象读取 / 存在性 / 删除回源）
-- [ ] C3-003 File Security
+- [x] C3-003 File Security（大小 / 扩展名白名单 / 哈希校验）
 - [ ] C3-004 Parser Router
 - [ ] C3-005 MinerU
 - [ ] C3-006 DOCX

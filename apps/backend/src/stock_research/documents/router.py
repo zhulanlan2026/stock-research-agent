@@ -1,6 +1,4 @@
-import hashlib
 import uuid
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -8,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.documents.dependencies import get_raw_object_store
 from stock_research.documents.schemas import DocumentUploadResponse
+from stock_research.documents.security import FileSecurityService
 from stock_research.documents.storage import RawObjectStore
 from stock_research.documents.store import DocumentStore
 from stock_research.iam.dependencies import require_permission
@@ -34,14 +33,22 @@ async def upload_file(
     object_store: RawObjectStore = Depends(get_raw_object_store),
 ) -> DocumentUploadResponse:
     data = await file.read()
-    if len(data) > MAX_UPLOAD_BYTES:
+    security = FileSecurityService().validate(
+        file.filename,
+        file.content_type,
+        data,
+    )
+    if not security.allowed:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail={"code": "FILE_TOO_LARGE", "message": "上传文件超过 100MB 限制"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "FILE_SECURITY_REJECTED",
+                "message": security.reason or "文件安全校验失败",
+            },
         )
 
-    content_hash = hashlib.sha256(data).hexdigest()
-    safe_filename = Path(file.filename or "upload").name
+    content_hash = security.content_hash
+    safe_filename = security.sanitized_filename
     object_key = f"{current_user.tenant_id}/{uuid.uuid4()}/{safe_filename}"
 
     await object_store.put_object(
