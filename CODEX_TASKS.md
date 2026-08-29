@@ -66,7 +66,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C2-004 CPA/Quality
 - [x] C2-005 Peer
 - [x] C2-006 Valuation
-- [ ] C2-007 Risk
+- [x] C2-007 Risk（财务杠杆 / 流动性 / 现金流覆盖 / 波动回撤风险）
 - [ ] C2-008 Scenario
 - [ ] C2-009 Decision
 - [ ] C2-010 Snapshot
