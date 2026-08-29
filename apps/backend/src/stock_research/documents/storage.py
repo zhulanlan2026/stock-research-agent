@@ -16,6 +16,15 @@ class RawObjectStore(Protocol):
     ) -> None:
         ...
 
+    async def get_object(self, object_key: str) -> bytes | None:
+        ...
+
+    async def delete_object(self, object_key: str) -> None:
+        ...
+
+    async def object_exists(self, object_key: str) -> bool:
+        ...
+
 
 class MinioRawObjectStore:
     """把上传文件写入 MinIO 原始桶，PostgreSQL 保存元数据真相。"""
@@ -53,3 +62,24 @@ class MinioRawObjectStore:
             )
         except S3Error:
             raise
+
+    async def get_object(self, object_key: str) -> bytes | None:
+        try:
+            response = self._client.get_object(RAW_BUCKET, object_key)
+            try:
+                return response.read()
+            finally:
+                response.close()
+                response.release_conn()
+        except Exception:
+            return None
+
+    async def delete_object(self, object_key: str) -> None:
+        self._client.remove_object(RAW_BUCKET, object_key)
+
+    async def object_exists(self, object_key: str) -> bool:
+        try:
+            self._client.stat_object(RAW_BUCKET, object_key)
+            return True
+        except Exception:
+            return False
