@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.stores.models.evidence import Claim, Evidence
@@ -79,3 +80,17 @@ class EvidenceClaimDraftStore:
         await self.session.flush()
         await self.session.refresh(claim)
         return claim
+
+    async def get_evidence(self, evidence_id: uuid.UUID) -> Evidence | None:
+        return await self.session.get(Evidence, evidence_id)
+
+    async def list_evidence_by_document(
+        self,
+        document_id: uuid.UUID,
+    ) -> list[Evidence]:
+        result = await self.session.execute(
+            select(Evidence)
+            .where(Evidence.document_id == document_id)
+            .order_by(Evidence.created_at, Evidence.id)
+        )
+        return list(result.scalars().all())

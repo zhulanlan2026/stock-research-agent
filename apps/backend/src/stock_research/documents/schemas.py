@@ -29,3 +29,21 @@ class DocumentResponse(BaseModel):
     external_model_allowed: bool
     created_at: datetime
     updated_at: datetime
+
+
+class EvidenceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    document_id: uuid.UUID | None
+    document_version_id: uuid.UUID | None
+    root_evidence_id: uuid.UUID | None
+    page: int | None
+    section: str | None
+    content_hash: str
+    content: str
+    source_level: str | None
+    citation_ready: bool
+    authorization: dict[str, object]
+    created_at: datetime
+    updated_at: datetime
