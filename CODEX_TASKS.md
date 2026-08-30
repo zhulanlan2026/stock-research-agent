@@ -82,8 +82,8 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C3-004 Parser Router（扩展名 -> MinerU/docx/xlsx/html/csv）
 - [x] C3-005 MinerU（CLI 适配器 / 可用性检测 / Markdown 输出）
 - [x] C3-006 DOCX（python-docx 段落解析适配器）
-- [ ] C3-007 XLSX
-- [ ] C3-008 HTML
+- [x] C3-007 XLSX（openpyxl 工作表解析适配器）
+- [x] C3-008 HTML（lxml 文本提取适配器）
 - [ ] C3-009 Normalized Block
 - [ ] C3-010 Chunk
 - [ ] C3-011 Evidence/Claim Draft
