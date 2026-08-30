@@ -28,6 +28,7 @@ from stock_research.stores.models.iam import (
     UserRole,
 )
 from stock_research.stores.models.market import MarketBar, MarketMinuteState, MarketSnapshot
+from stock_research.stores.models.review import HumanReview, HumanReviewEvent
 from stock_research.stores.models.supply_chain import (
     Contract,
     Order,
@@ -59,6 +60,8 @@ __all__ = [
     "EntitlementEvent",
     "Evidence",
     "FinancialFact",
+    "HumanReview",
+    "HumanReviewEvent",
     "Identity",
     "InboxEvent",
     "MfaFactor",
