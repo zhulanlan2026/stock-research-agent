@@ -94,4 +94,4 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C3-016 Reranker（词法重排 / 权威 / 新鲜度）
 - [x] C3-017 Evidence Pack（排序 / 根证据去重 / 数量上限 / as_of）
 - [x] C3-018 Citation API（按文档列证据 / 按 ID 取证据）
-- [ ] C3-019 Golden Dataset
+- [x] C3-019 Golden Dataset（Recall@K / MRR / ACL 泄漏评估）
