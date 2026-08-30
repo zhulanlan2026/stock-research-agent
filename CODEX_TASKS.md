@@ -84,8 +84,8 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C3-006 DOCX（python-docx 段落解析适配器）
 - [x] C3-007 XLSX（openpyxl 工作表解析适配器）
 - [x] C3-008 HTML（lxml 文本提取适配器）
-- [ ] C3-009 Normalized Block
-- [ ] C3-010 Chunk
+- [x] C3-009 Normalized Block（归一化块模型 / 迁移 / 构建器 / Store）
+- [x] C3-010 Chunk（确定性文本分块 / 重叠窗口 / 哈希）
 - [ ] C3-011 Evidence/Claim Draft
 - [ ] C3-012 BM25
 - [ ] C3-013 Dense
