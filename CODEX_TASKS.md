@@ -113,7 +113,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 ## P5 Multi-Agent / HITL
 
 - [x] C5-001 Model Gateway（Gateway 抽象 + DeepSeek Client）
-- [ ] C5-002 Model Discovery
+- [x] C5-002 Model Discovery（别名注册 / 能力 / 优先级解析）
 - [ ] C5-003 Prompt Registry
 - [ ] C5-004 Skill Manifest
 - [ ] C5-005 Skill Gateway
