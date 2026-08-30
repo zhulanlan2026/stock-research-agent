@@ -12,6 +12,7 @@ from stock_research.stores.models.entitlement import (
     QuotaLedger,
     Subscription,
 )
+from stock_research.stores.models.evidence import Claim, Evidence
 from stock_research.stores.models.fundamental import FinancialFact
 from stock_research.stores.models.iam import (
     Credential,
@@ -42,12 +43,14 @@ __all__ = [
     "AnalysisSymbolQuota",
     "AuditEvent",
     "CheckpointRef",
+    "Claim",
     "Credential",
     "DataAccessLog",
     "Device",
     "Document",
     "DocumentVersion",
     "EntitlementEvent",
+    "Evidence",
     "FinancialFact",
     "Identity",
     "InboxEvent",
