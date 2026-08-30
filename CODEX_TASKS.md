@@ -117,7 +117,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C5-003 Prompt Registry（版本化模板注册 / 渲染）
 - [x] C5-004 Skill Manifest（统一 Manifest 注册表）
 - [x] C5-005 Skill Gateway（默认拒绝 / scope 校验）
-- [ ] C5-006 Intent Router
+- [x] C5-006 Intent Router（规则化意图 -> Agent）
 - [ ] C5-007 Document Agent
 - [ ] C5-008 Research Agent
 - [ ] C5-009 Report Agent
