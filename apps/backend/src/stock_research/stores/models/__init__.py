@@ -4,7 +4,7 @@ from stock_research.stores.models.audit import (
     ModelUsage,
     PolicyDecision,
 )
-from stock_research.stores.models.document import Document, DocumentVersion
+from stock_research.stores.models.document import Document, DocumentVersion, NormalizedBlock
 from stock_research.stores.models.entitlement import (
     AnalysisSymbolQuota,
     EntitlementEvent,
@@ -56,6 +56,7 @@ __all__ = [
     "MarketMinuteState",
     "MarketSnapshot",
     "ModelUsage",
+    "NormalizedBlock",
     "OutboxEvent",
     "Permission",
     "Plan",

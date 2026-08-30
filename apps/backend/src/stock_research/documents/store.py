@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from stock_research.stores.models.document import Document, DocumentVersion
+from stock_research.documents.normalization import NormalizedBlockDraft
+from stock_research.stores.models.document import Document, DocumentVersion, NormalizedBlock
 
 
 class DocumentStore:
@@ -51,3 +52,24 @@ class DocumentStore:
         await self.session.refresh(document)
         await self.session.refresh(version)
         return document, version
+
+
+class NormalizedBlockStore:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def create_block(self, draft: NormalizedBlockDraft) -> NormalizedBlock:
+        block = NormalizedBlock(
+            document_version_id=draft.document_version_id,
+            page_start=draft.page_start,
+            page_end=draft.page_end,
+            section=draft.section,
+            block_type=draft.block_type,
+            content_hash=draft.content_hash,
+            text=draft.text,
+            block_metadata=draft.metadata,
+        )
+        self.session.add(block)
+        await self.session.flush()
+        await self.session.refresh(block)
+        return block
