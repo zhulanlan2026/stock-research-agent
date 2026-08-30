@@ -87,7 +87,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C3-009 Normalized Block（归一化块模型 / 迁移 / 构建器 / Store）
 - [x] C3-010 Chunk（确定性文本分块 / 重叠窗口 / 哈希）
 - [x] C3-011 Evidence/Claim Draft（DRAFT 状态模型 / Store / 引用绑定）
-- [ ] C3-012 BM25
+- [x] C3-012 BM25（确定性稀疏检索索引 / 查询）
 - [ ] C3-013 Dense
 - [ ] C3-014 ACL
 - [ ] C3-015 RRF
