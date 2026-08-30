@@ -123,7 +123,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C5-009 Report Agent（封装报告渲染服务）
 - [x] C5-010 Review Agent（确定性报告审核）
 - [x] C5-011 LangGraph（线性图执行 fallback）
-- [ ] C5-012 Checkpoint
+- [x] C5-012 Checkpoint（CheckpointStore 持久化）
 - [ ] C5-013 Policy
 - [ ] C5-014 Human Review
 - [ ] C5-015 Review UI
