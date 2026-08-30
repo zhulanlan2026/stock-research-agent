@@ -109,3 +109,24 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C4-009 Supply Chain Skill（manifest + 文本 -> Graph Candidate）
 - [x] C4-010 Risk Propagation（沿边确定性风险传播）
 - [x] C4-011 Graph UI（ECharts 供应链图页面）
+
+## P5 Multi-Agent / HITL
+
+- [x] C5-001 Model Gateway（Gateway 抽象 + DeepSeek Client）
+- [ ] C5-002 Model Discovery
+- [ ] C5-003 Prompt Registry
+- [ ] C5-004 Skill Manifest
+- [ ] C5-005 Skill Gateway
+- [ ] C5-006 Intent Router
+- [ ] C5-007 Document Agent
+- [ ] C5-008 Research Agent
+- [ ] C5-009 Report Agent
+- [ ] C5-010 Review Agent
+- [ ] C5-011 LangGraph
+- [ ] C5-012 Checkpoint
+- [ ] C5-013 Policy
+- [ ] C5-014 Human Review
+- [ ] C5-015 Review UI
+- [ ] C5-016 HITL Metrics
+- [ ] C5-017 Outbox Publish
+- [ ] C5-018 Agent Security Tests
