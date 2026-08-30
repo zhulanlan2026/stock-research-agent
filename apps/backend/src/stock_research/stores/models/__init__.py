@@ -28,7 +28,12 @@ from stock_research.stores.models.iam import (
     UserRole,
 )
 from stock_research.stores.models.market import MarketBar, MarketMinuteState, MarketSnapshot
-from stock_research.stores.models.supply_chain import Contract, Order, OrderStatusEvent
+from stock_research.stores.models.supply_chain import (
+    Contract,
+    Order,
+    OrderStatusEvent,
+    OrganizationAlias,
+)
 from stock_research.stores.models.user_setting import UserSetting
 from stock_research.stores.models.workflow import (
     CheckpointRef,
@@ -65,6 +70,7 @@ __all__ = [
     "OutboxEvent",
     "Order",
     "OrderStatusEvent",
+    "OrganizationAlias",
     "Permission",
     "Plan",
     "PolicyDecision",

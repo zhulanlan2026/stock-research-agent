@@ -101,7 +101,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C4-001 Contract/Order（合同 / 订单模型与 Store）
 - [x] C4-002 Lifecycle（订单状态事件 / 确定性状态流转）
 - [x] C4-003 Claim Extraction（规则化供应链关系抽取）
-- [ ] C4-004 Entity Alias
+- [x] C4-004 Entity Alias（组织别名模型 / 解析服务）
 - [ ] C4-005 Graph Candidate
 - [ ] C4-006 Graph Review
 - [ ] C4-007 Neo4j Publish

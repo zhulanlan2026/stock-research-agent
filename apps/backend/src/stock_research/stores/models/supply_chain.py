@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String
+from sqlalchemy import DateTime, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -51,3 +51,16 @@ class OrderStatusEvent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     to_status: Mapped[str] = mapped_column(String(32), nullable=False)
     event_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class OrganizationAlias(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "organization_alias"
+    __table_args__ = (
+        UniqueConstraint("canonical_name", "alias", name="uq_organization_alias"),
+    )
+
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tenant.id"), index=True, nullable=True
+    )
+    canonical_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    alias: Mapped[str] = mapped_column(String(200), nullable=False)
