@@ -92,6 +92,6 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C3-014 ACL（检索前默认拒绝 / 租户可见范围 license symbol 过滤）
 - [x] C3-015 RRF（多路排序 Reciprocal Rank Fusion）
 - [x] C3-016 Reranker（词法重排 / 权威 / 新鲜度）
-- [ ] C3-017 Evidence Pack
+- [x] C3-017 Evidence Pack（排序 / 根证据去重 / 数量上限 / as_of）
 - [ ] C3-018 Citation UI/API
 - [ ] C3-019 Golden Dataset
