@@ -90,7 +90,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C3-012 BM25（确定性稀疏检索索引 / 查询）
 - [x] C3-013 Dense（余弦相似度稠密向量索引）
 - [x] C3-014 ACL（检索前默认拒绝 / 租户可见范围 license symbol 过滤）
-- [ ] C3-015 RRF
+- [x] C3-015 RRF（多路排序 Reciprocal Rank Fusion）
 - [ ] C3-016 Reranker
 - [ ] C3-017 Evidence Pack
 - [ ] C3-018 Citation UI/API
