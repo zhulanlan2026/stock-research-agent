@@ -105,7 +105,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C4-005 Graph Candidate（Claim -> 节点 / 边候选）
 - [x] C4-006 Graph Review（Evidence 绑定审核）
 - [x] C4-007 Neo4j Publish（Cypher 节点 / 边发布服务）
-- [ ] C4-008 Graph ACL
+- [x] C4-008 Graph ACL（未授权节点相关边过滤）
 - [ ] C4-009 Supply Chain Skill
 - [ ] C4-010 Risk Propagation
 - [ ] C4-011 Graph UI
