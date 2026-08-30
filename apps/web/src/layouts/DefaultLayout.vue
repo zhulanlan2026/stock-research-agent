@@ -19,6 +19,7 @@ async function logout(): Promise<void> {
       <nav class="nav">
         <router-link to="/">工作台</router-link>
         <router-link to="/market">行情</router-link>
+        <router-link to="/supply-chain">供应链</router-link>
         <button type="button" @click="logout">退出</button>
       </nav>
     </header>

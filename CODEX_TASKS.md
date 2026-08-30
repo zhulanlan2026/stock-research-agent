@@ -108,4 +108,4 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C4-008 Graph ACL（未授权节点相关边过滤）
 - [x] C4-009 Supply Chain Skill（manifest + 文本 -> Graph Candidate）
 - [x] C4-010 Risk Propagation（沿边确定性风险传播）
-- [ ] C4-011 Graph UI
+- [x] C4-011 Graph UI（ECharts 供应链图页面）
