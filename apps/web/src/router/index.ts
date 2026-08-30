@@ -25,6 +25,10 @@ const router = createRouter({
           path: 'supply-chain',
           component: () => import('../app/SupplyChainView.vue'),
         },
+        {
+          path: 'review',
+          component: () => import('../app/ReviewView.vue'),
+        },
       ],
     },
   ],

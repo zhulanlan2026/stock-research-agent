@@ -126,7 +126,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C5-012 Checkpoint（CheckpointStore 持久化）
 - [x] C5-013 Policy（默认 DENY 的确定性 Policy Engine）
 - [x] C5-014 Human Review（模型 / 状态流转 / 决策）
-- [ ] C5-015 Review UI
+- [x] C5-015 Review UI（前端审核页面）
 - [ ] C5-016 HITL Metrics
 - [ ] C5-017 Outbox Publish
 - [ ] C5-018 Agent Security Tests
