@@ -95,3 +95,17 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C3-017 Evidence Pack（排序 / 根证据去重 / 数量上限 / as_of）
 - [x] C3-018 Citation API（按文档列证据 / 按 ID 取证据）
 - [x] C3-019 Golden Dataset（Recall@K / MRR / ACL 泄漏评估）
+
+## P4 Supply Chain
+
+- [x] C4-001 Contract/Order（合同 / 订单模型与 Store）
+- [ ] C4-002 Lifecycle
+- [ ] C4-003 Claim Extraction
+- [ ] C4-004 Entity Alias
+- [ ] C4-005 Graph Candidate
+- [ ] C4-006 Graph Review
+- [ ] C4-007 Neo4j Publish
+- [ ] C4-008 Graph ACL
+- [ ] C4-009 Supply Chain Skill
+- [ ] C4-010 Risk Propagation
+- [ ] C4-011 Graph UI
