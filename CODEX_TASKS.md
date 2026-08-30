@@ -128,5 +128,5 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C5-014 Human Review（模型 / 状态流转 / 决策）
 - [x] C5-015 Review UI（前端审核页面）
 - [x] C5-016 HITL Metrics（审核决策指标计算）
-- [ ] C5-017 Outbox Publish
+- [x] C5-017 Outbox Publish（正式副作用发布入口 / 幂等）
 - [ ] C5-018 Agent Security Tests
