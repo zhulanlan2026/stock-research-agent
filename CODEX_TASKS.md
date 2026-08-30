@@ -99,7 +99,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 ## P4 Supply Chain
 
 - [x] C4-001 Contract/Order（合同 / 订单模型与 Store）
-- [ ] C4-002 Lifecycle
+- [x] C4-002 Lifecycle（订单状态事件 / 确定性状态流转）
 - [ ] C4-003 Claim Extraction
 - [ ] C4-004 Entity Alias
 - [ ] C4-005 Graph Candidate

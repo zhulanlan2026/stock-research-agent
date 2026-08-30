@@ -39,3 +39,15 @@ class Order(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     currency: Mapped[str] = mapped_column(String(8), nullable=False)
     order_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="CREATED", nullable=False)
+
+
+class OrderStatusEvent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "order_status_event"
+
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("order.id"), index=True
+    )
+    from_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    to_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    event_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
