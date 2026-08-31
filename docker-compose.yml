@@ -23,6 +23,39 @@ volumes:
     name: stock-research-agent_neo4j_data
 
 services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: research-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - research-net
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: research-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - research-net
+    restart: unless-stopped
+
   postgres:
     image: postgres:15-alpine
     container_name: research-postgres
