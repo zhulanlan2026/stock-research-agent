@@ -135,7 +135,7 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 
 - [x] C6-001 OTel（可选配置入口 / 安全降级）
 - [x] C6-002 Prometheus（轻量指标注册表 / 文本渲染）
-- [ ] C6-003 Grafana
+- [x] C6-003 Grafana（Prometheus 数据源 provisioning）
 - [ ] C6-004 Alerts
 - [ ] C6-005 Backup/PITR
 - [ ] C6-006 MinIO Versioning
