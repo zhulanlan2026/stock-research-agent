@@ -138,13 +138,13 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C6-003 Grafana（Prometheus 数据源 provisioning）
 - [x] C6-004 Alerts（Prometheus 告警规则）
 - [x] C6-005 Backup/PITR（PostgreSQL 备份恢复 runbook）
-- [ ] C6-006 MinIO Versioning
-- [ ] C6-007 Milvus Rebuild
-- [ ] C6-008 Neo4j Rebuild
-- [ ] C6-009 Security
-- [ ] C6-010 Performance
-- [ ] C6-011 Feature Flag
-- [ ] C6-012 Canary
-- [ ] C6-013 Rollback
-- [ ] C6-014 DR Drill
-- [ ] C6-015 Production Checklist
+- [x] C6-006 MinIO Versioning（版本化 runbook）
+- [x] C6-007 Milvus Rebuild（重建 runbook）
+- [x] C6-008 Neo4j Rebuild（重建 runbook）
+- [x] C6-009 Security（安全检查清单）
+- [x] C6-010 Performance（性能检查清单）
+- [x] C6-011 Feature Flag（FeatureFlagService）
+- [x] C6-012 Canary（灰度发布 runbook）
+- [x] C6-013 Rollback（回滚 runbook）
+- [x] C6-014 DR Drill（容灾演练 runbook）
+- [x] C6-015 Production Checklist（生产检查清单）
