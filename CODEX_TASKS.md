@@ -130,3 +130,21 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C5-016 HITL Metrics（审核决策指标计算）
 - [x] C5-017 Outbox Publish（正式副作用发布入口 / 幂等）
 - [x] C5-018 Agent Security Tests（Skill/Policy/ACL/Graph 安全回归）
+
+## P6 Production Readiness
+
+- [x] C6-001 OTel（可选配置入口 / 安全降级）
+- [ ] C6-002 Prometheus
+- [ ] C6-003 Grafana
+- [ ] C6-004 Alerts
+- [ ] C6-005 Backup/PITR
+- [ ] C6-006 MinIO Versioning
+- [ ] C6-007 Milvus Rebuild
+- [ ] C6-008 Neo4j Rebuild
+- [ ] C6-009 Security
+- [ ] C6-010 Performance
+- [ ] C6-011 Feature Flag
+- [ ] C6-012 Canary
+- [ ] C6-013 Rollback
+- [ ] C6-014 DR Drill
+- [ ] C6-015 Production Checklist
