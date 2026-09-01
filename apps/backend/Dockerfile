@@ -8,8 +8,9 @@ WORKDIR /app
 
 COPY apps/backend /app/apps/backend
 
-RUN pip install --no-cache-dir /app/apps/backend
+RUN pip install --no-cache-dir /app/apps/backend \
+    && chmod +x /app/apps/backend/docker-entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["uvicorn", "stock_research.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/apps/backend/docker-entrypoint.sh"]
