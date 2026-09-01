@@ -66,3 +66,75 @@ jobs:
           python-version: "3.10"
       - run: uv sync
       - run: uv run pytest apps/backend/tests/api -q
+
+  smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: research
+          POSTGRES_PASSWORD: research123
+          POSTGRES_DB: research_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U research"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://research:research123@localhost:5432/research_db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: uv sync
+      - run: pnpm install --frozen-lockfile
+      - name: Migrate and seed user
+        run: |
+          cd apps/backend
+          uv run alembic -c alembic.ini upgrade head
+          cd ../..
+          uv run python scripts/seed_dev_user.py \
+            --email smoke@example.com \
+            --password smoke-password-123 \
+            --role ADMIN \
+            --tenant-slug dev
+      - name: Start backend
+        run: |
+          nohup uv run uvicorn stock_research.main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+      - name: Start frontend
+        run: |
+          nohup pnpm --filter @stock-research/web dev --host 0.0.0.0 --port 5173 > /tmp/frontend.log 2>&1 &
+      - name: Wait for readiness
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8000/health/live; then break; fi
+            sleep 2
+          done
+          for i in $(seq 1 90); do
+            if curl -fsS http://localhost:5173/; then break; fi
+            sleep 2
+          done
+          curl -fsS http://localhost:8000/health/live
+          curl -fsS http://localhost:5173/
+      - name: Install Playwright browser
+        run: pnpm --filter @stock-research/web exec playwright install --with-deps chromium
+      - name: Run smoke test
+        run: pnpm --filter @stock-research/web exec playwright test --config "$GITHUB_WORKSPACE/tests/e2e/playwright.config.ts"
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          echo "--- backend ---"
+          cat /tmp/backend.log
+          echo "--- frontend ---"
+          cat /tmp/frontend.log
