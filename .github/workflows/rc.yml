@@ -101,3 +101,33 @@ jobs:
           cd ../..
       - name: Run backup/restore drill
         run: bash scripts/backup_restore_drill.sh
+
+  full-integration:
+    runs-on: ubuntu-latest
+    services:
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin123
+        ports:
+          - 9000:9000
+    env:
+      MINIO_ENDPOINT: localhost:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_SECURE: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+      - run: uv sync
+      - name: Wait for MinIO
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:9000/minio/health/live; then break; fi
+            sleep 2
+          done
+          curl -fsS http://localhost:9000/minio/health/live
+      - run: uv run pytest tests/integration -q
