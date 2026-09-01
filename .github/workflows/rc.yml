@@ -62,3 +62,42 @@ jobs:
           python-version: "3.10"
       - run: uv sync
       - run: uv run pytest tests/performance -q
+
+  backup-restore:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: research
+          POSTGRES_PASSWORD: research123
+          POSTGRES_DB: research_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U research"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://research:research123@localhost:5432/research_db
+      POSTGRES_USER: research
+      POSTGRES_PASSWORD: research123
+      POSTGRES_DB: research_db
+      PGHOST: localhost
+      PGPORT: 5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+      - run: uv sync
+      - name: Migrate schema
+        run: |
+          cd apps/backend
+          uv run alembic -c alembic.ini upgrade head
+          cd ../..
+      - name: Run backup/restore drill
+        run: bash scripts/backup_restore_drill.sh
