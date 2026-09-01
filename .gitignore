@@ -18,4 +18,5 @@ htmlcov/
 .pnpm-store/
 .env.*
 !.env.example
+!.env.production.example
 feishu_tmux_bridge.py
