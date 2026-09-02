@@ -109,14 +109,16 @@ jobs:
             --password smoke-password-123 \
             --role ADMIN \
             --tenant-slug dev
-      - name: Start backend
+      - name: Install Playwright browser
+        run: pnpm --filter @stock-research/web exec playwright install --with-deps chromium
+      - name: Run smoke test
         run: |
-          nohup uv run uvicorn stock_research.main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
-      - name: Start frontend
-        run: |
-          nohup pnpm --filter @stock-research/web dev --host 0.0.0.0 --port 5173 > /tmp/frontend.log 2>&1 &
-      - name: Wait for readiness
-        run: |
+          uv run uvicorn stock_research.main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+          BACKEND_PID=$!
+          pnpm --filter @stock-research/web dev --host 0.0.0.0 --port 5173 > /tmp/frontend.log 2>&1 &
+          FRONTEND_PID=$!
+          trap 'kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true' EXIT
+
           for i in $(seq 1 60); do
             if curl -fsS http://localhost:8000/health/live; then break; fi
             sleep 2
@@ -127,10 +129,8 @@ jobs:
           done
           curl -fsS http://localhost:8000/health/live
           curl -fsS http://localhost:5173/
-      - name: Install Playwright browser
-        run: pnpm --filter @stock-research/web exec playwright install --with-deps chromium
-      - name: Run smoke test
-        run: pnpm --filter @stock-research/web exec playwright test --config "$GITHUB_WORKSPACE/tests/e2e/playwright.config.ts"
+
+          pnpm --filter @stock-research/web exec playwright test --config "$GITHUB_WORKSPACE/tests/e2e/playwright.config.ts"
       - name: Dump logs on failure
         if: failure()
         run: |
