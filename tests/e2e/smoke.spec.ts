@@ -9,5 +9,5 @@ test('login smoke reaches dashboard', async ({ page }) => {
   await page.getByRole('button', { name: '登录' }).click();
 
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByText('工作台')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '研股工作台' })).toBeVisible();
 });
