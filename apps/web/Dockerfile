@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN npm install --global pnpm@9.15.9
 
-COPY pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web/package.json apps/web/package.json
 COPY packages/api-types/package.json packages/api-types/package.json
 
