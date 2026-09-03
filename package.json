@@ -1,0 +1,9 @@
+{
+  "name": "stock-research-agent",
+  "private": true,
+  "pnpm": {
+    "overrides": {
+      "fast-uri": ">=3.1.6 <4"
+    }
+  }
+}
