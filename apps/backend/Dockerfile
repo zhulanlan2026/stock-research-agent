@@ -6,12 +6,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY apps/backend /app/apps/backend
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel "jaraco.context>=6.1.0" \
-    && pip install --no-cache-dir /app/apps/backend \
-    && pip install --no-cache-dir --upgrade "msgpack>=1.2.1" "setuptools>=78.1.1" \
+COPY pyproject.toml uv.lock ./
+COPY apps/backend /app/apps/backend
+COPY apps/xtquant-collector /app/apps/xtquant-collector
+
+RUN uv sync --frozen --no-dev \
     && chmod +x /app/apps/backend/docker-entrypoint.sh
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 
