@@ -8,7 +8,8 @@ WORKDIR /app
 
 COPY apps/backend /app/apps/backend
 
-RUN pip install --no-cache-dir /app/apps/backend \
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel "jaraco.context>=6.1.0" \
+    && pip install --no-cache-dir /app/apps/backend \
     && chmod +x /app/apps/backend/docker-entrypoint.sh
 
 EXPOSE 8000
