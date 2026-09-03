@@ -13,6 +13,10 @@ COPY apps/backend /app/apps/backend
 COPY apps/xtquant-collector /app/apps/xtquant-collector
 
 RUN uv sync --frozen --no-dev \
+    && rm -rf /usr/local/lib/python3.10/site-packages/pip* \
+              /usr/local/lib/python3.10/site-packages/setuptools* \
+              /usr/local/lib/python3.10/site-packages/wheel* \
+              /usr/local/lib/python3.10/site-packages/jaraco* \
     && chmod +x /app/apps/backend/docker-entrypoint.sh
 
 ENV PATH="/app/.venv/bin:$PATH"
