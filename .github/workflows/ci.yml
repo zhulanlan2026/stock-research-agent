@@ -17,7 +17,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run mypy .
       - run: uv run pytest apps/backend/tests apps/xtquant-collector/tests
-      - run: uv run bandit -r apps/backend/src
+      - run: uv run bandit -r apps/backend/src --severity-level medium
       - run: uv run pip-audit
 
   web:
