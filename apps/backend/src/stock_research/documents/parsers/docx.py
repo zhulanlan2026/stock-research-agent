@@ -18,7 +18,7 @@ class DocxParser:
             return self._parse_path(path)
 
     def _parse_path(self, path: Path) -> str:
-        from docx import Document  # type: ignore[import-not-found]
+        from docx import Document
 
         document = Document(str(path))
         return "\n".join(paragraph.text for paragraph in document.paragraphs)
