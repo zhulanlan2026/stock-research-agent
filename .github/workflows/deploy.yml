@@ -7,6 +7,10 @@ on:
         description: Target environment
         required: true
         default: production
+      image_tag:
+        description: Image tag to deploy (defaults to latest)
+        required: false
+        default: latest
 
 jobs:
   deploy:
@@ -22,4 +26,5 @@ jobs:
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             export GITHUB_REPOSITORY=${{ github.repository }}
+            export IMAGE_TAG=${{ inputs.image_tag }}
             ./scripts/deploy.sh

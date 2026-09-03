@@ -2,6 +2,9 @@
 set -euo pipefail
 
 export GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-owner/repo}"
+export IMAGE_TAG="${IMAGE_TAG:-latest}"
+
+echo "Deploying ${GITHUB_REPOSITORY} backend/web with tag=${IMAGE_TAG}"
 
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d --remove-orphans
