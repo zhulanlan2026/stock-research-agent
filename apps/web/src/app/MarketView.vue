@@ -515,9 +515,7 @@ function resolveCloudConflict(action: 'local' | 'cloud' | 'merge'): void {
 
 async function loadFromCloud(): Promise<void> {
   try {
-    const { data } = await http.get<UserSettingResponse>(
-      `/user-settings/${CLOUD_SETTING_KEY}`,
-    );
+    const { data } = await http.get<UserSettingResponse>(`/user-settings/${CLOUD_SETTING_KEY}`);
     const backup = data.value as ProfileBackup;
     if (localDirty.value) {
       pendingCloudBackup.value = backup;
@@ -672,17 +670,11 @@ function persistArchivedConflictHistory(): void {
       archiveHistoryLimit.value,
     );
   }
-  window.localStorage.setItem(
-    CONFLICT_ARCHIVE_KEY,
-    JSON.stringify(archivedConflictHistory.value),
-  );
+  window.localStorage.setItem(CONFLICT_ARCHIVE_KEY, JSON.stringify(archivedConflictHistory.value));
 }
 
 function archiveConflictHistory(): void {
-  archivedConflictHistory.value = [
-    ...conflictHistory.value,
-    ...archivedConflictHistory.value,
-  ];
+  archivedConflictHistory.value = [...conflictHistory.value, ...archivedConflictHistory.value];
   conflictHistory.value = [];
   persistConflictHistory();
   persistArchivedConflictHistory();
@@ -878,8 +870,19 @@ function renderChart(): void {
     tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
     legend: {
       data: [
-        'K线', 'MA5', 'MA10', 'MA20', 'EMA5', 'EMA10', 'EMA20',
-        '成交量', 'VOL MA5', 'VOL MA10', 'DIF', 'DEA', 'RSI',
+        'K线',
+        'MA5',
+        'MA10',
+        'MA20',
+        'EMA5',
+        'EMA10',
+        'EMA20',
+        '成交量',
+        'VOL MA5',
+        'VOL MA10',
+        'DIF',
+        'DEA',
+        'RSI',
       ],
       top: 28,
     },
@@ -1007,11 +1010,7 @@ onBeforeUnmount(() => {
     <div class="market-toolbar">
       <h1>多标的行情监控</h1>
       <form class="market-form" @submit.prevent="addSymbols">
-        <input
-          v-model="symbolInput"
-          type="text"
-          placeholder="例如 600519.SH, 000001.SZ"
-        />
+        <input v-model="symbolInput" type="text" placeholder="例如 600519.SH, 000001.SZ" />
         <button type="submit" :disabled="loading">添加</button>
       </form>
     </div>
@@ -1019,9 +1018,7 @@ onBeforeUnmount(() => {
     <p v-if="error" class="error">
       {{ error }}
     </p>
-    <p v-else-if="status === 'loading'" class="status">
-      正在刷新行情…
-    </p>
+    <p v-else-if="status === 'loading'" class="status">正在刷新行情…</p>
 
     <div class="monitor-grid">
       <button
@@ -1105,8 +1102,13 @@ onBeforeUnmount(() => {
       <button type="button" @click="applyPreset('trend')">趋势</button>
       <label><input v-model="showMa" type="checkbox" @change="applyGroupVisibility" /> MA</label>
       <label><input v-model="showEma" type="checkbox" @change="applyGroupVisibility" /> EMA</label>
-      <label><input v-model="showVolumeMa" type="checkbox" @change="applyGroupVisibility" /> 均量线</label>
-      <label><input v-model="showMacd" type="checkbox" @change="applyGroupVisibility" /> MACD</label>
+      <label
+        ><input v-model="showVolumeMa" type="checkbox" @change="applyGroupVisibility" />
+        均量线</label
+      >
+      <label
+        ><input v-model="showMacd" type="checkbox" @change="applyGroupVisibility" /> MACD</label
+      >
       <label><input v-model="showRsi" type="checkbox" @change="applyGroupVisibility" /> RSI</label>
     </div>
     <div class="config-actions">
@@ -1192,7 +1194,12 @@ onBeforeUnmount(() => {
         </label>
         <label>
           保留条数
-          <input v-model.number="conflictHistoryLimit" type="number" min="1" @change="saveCleanupSettings" />
+          <input
+            v-model.number="conflictHistoryLimit"
+            type="number"
+            min="1"
+            @change="saveCleanupSettings"
+          />
         </label>
         <label>
           归档清理
@@ -1203,7 +1210,12 @@ onBeforeUnmount(() => {
         </label>
         <label>
           归档保留条数
-          <input v-model.number="archiveHistoryLimit" type="number" min="1" @change="saveCleanupSettings" />
+          <input
+            v-model.number="archiveHistoryLimit"
+            type="number"
+            min="1"
+            @change="saveCleanupSettings"
+          />
         </label>
       </div>
       <div class="history-header">
@@ -1260,9 +1272,7 @@ onBeforeUnmount(() => {
         </tr>
       </tbody>
     </table>
-    <p v-if="!loading && snapshots.length === 0">
-      暂无快照数据。
-    </p>
+    <p v-if="!loading && snapshots.length === 0">暂无快照数据。</p>
   </section>
 </template>
 
