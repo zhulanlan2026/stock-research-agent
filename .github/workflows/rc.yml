@@ -136,3 +136,25 @@ jobs:
           done
           curl -fsS http://localhost:9000/minio/health/live
       - run: uv run pytest tests/integration -q
+
+  neo4j:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+      - run: uv sync
+      - name: Start Neo4j
+        run: |
+          docker run -d --name neo4j -p 7474:7474 -p 7687:7687 \
+            -e NEO4J_AUTH=neo4j/password123 \
+            neo4j:5-community
+      - name: Wait for Neo4j
+        run: |
+          for i in $(seq 1 90); do
+            if curl -fsS http://localhost:7474; then break; fi
+            sleep 2
+          done
+          curl -fsS http://localhost:7474
+      - run: uv run pytest tests/integration/test_neo4j_publish.py -q
