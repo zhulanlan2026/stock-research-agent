@@ -32,6 +32,7 @@ class RiskSnapshot:
     market_risk: dict[str, Decimal | None]
     risk_score: Decimal | None
     risk_level: str
+    risk_action: str
     coverage: Decimal
 
 
@@ -71,6 +72,7 @@ class RiskEngine:
             market_risk=market_risk,
             risk_score=score,
             risk_level=level,
+            risk_action=_risk_action(level),
             coverage=coverage,
         )
 
@@ -172,6 +174,15 @@ def _risk_classification(
     else:
         level = "LOW"
     return score, level, coverage
+
+
+def _risk_action(risk_level: str) -> str:
+    """把风险等级映射为风险动作：WATCH / RESTRICT / BLOCK。"""
+    if risk_level == "HIGH":
+        return "BLOCK"
+    if risk_level == "MEDIUM":
+        return "RESTRICT"
+    return "WATCH"
 
 
 def _component_score(key: str, value: Decimal) -> Decimal:

@@ -6,6 +6,7 @@ from stock_research.fundamental.risk import (
     RiskEngine,
     _financial_ratios,
     _market_risk,
+    _risk_action,
     _risk_classification,
 )
 from stock_research.fundamental.schemas import FinancialFactCreate
@@ -78,10 +79,16 @@ def test_risk_classification_returns_unknown_without_components() -> None:
     }
 
     score, level, coverage = _risk_classification(financial_ratios, market_risk)
-
     assert score is None
     assert level == "UNKNOWN"
     assert coverage == Decimal("0")
+
+
+def test_risk_action_maps_level_to_action() -> None:
+    assert _risk_action("LOW") == "WATCH"
+    assert _risk_action("MEDIUM") == "RESTRICT"
+    assert _risk_action("HIGH") == "BLOCK"
+    assert _risk_action("UNKNOWN") == "WATCH"
 
 
 def _fact(metric: str, value: str) -> FinancialFactCreate:
