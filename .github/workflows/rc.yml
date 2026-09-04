@@ -158,3 +158,35 @@ jobs:
           done
           curl -fsS http://localhost:7474
       - run: uv run pytest tests/integration/test_neo4j_publish.py -q
+
+  milvus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+      - run: uv sync
+      - name: Start Milvus dependencies
+        run: |
+          docker network create milvus-net
+          docker run -d --name etcd --network milvus-net \
+            quay.io/coreos/etcd:v3.5.5 \
+            etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+          docker run -d --name minio-milvus --network milvus-net \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data --console-address ":9002"
+      - name: Start Milvus
+        run: |
+          docker run -d --name milvus --network milvus-net -p 19530:19530 -p 9091:9091 \
+            -e ETCD_ENDPOINTS=etcd:2379 \
+            -e MINIO_ADDRESS=minio-milvus:9000 \
+            milvusdb/milvus:v2.5.27 milvus run standalone
+      - name: Wait for Milvus
+        run: |
+          for i in $(seq 1 120); do
+            if curl -fsS http://localhost:9091/healthz; then break; fi
+            sleep 2
+          done
+          curl -fsS http://localhost:9091/healthz
+      - run: uv run pytest tests/integration/test_milvus_dense.py -q
