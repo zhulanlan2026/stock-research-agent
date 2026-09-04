@@ -13,6 +13,11 @@ from stock_research.stores.models.entitlement import (
     Subscription,
 )
 from stock_research.stores.models.evidence import Claim, Evidence
+from stock_research.stores.models.feature_flag import (
+    FeatureFlag,
+    FeatureFlagExposure,
+    FeatureFlagRule,
+)
 from stock_research.stores.models.fundamental import FinancialFact
 from stock_research.stores.models.iam import (
     Credential,
@@ -59,6 +64,9 @@ __all__ = [
     "DocumentVersion",
     "EntitlementEvent",
     "Evidence",
+    "FeatureFlag",
+    "FeatureFlagExposure",
+    "FeatureFlagRule",
     "FinancialFact",
     "HumanReview",
     "HumanReviewEvent",
