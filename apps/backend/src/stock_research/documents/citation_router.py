@@ -19,21 +19,25 @@ _require_citation_read = require_permission("file.private.read")
 )
 async def list_document_evidence(
     document_id: uuid.UUID,
-    _: User = Depends(_require_citation_read),
+    current_user: User = Depends(_require_citation_read),
     session: AsyncSession = Depends(get_session),
 ) -> list[EvidenceResponse]:
     store = EvidenceClaimDraftStore(session)
-    evidence = await store.list_evidence_by_document(document_id)
+    evidence = await store.list_evidence_by_document(
+        document_id, tenant_id=current_user.tenant_id
+    )
     return [EvidenceResponse.model_validate(item) for item in evidence]
 
 
 @router.get("/evidence/{evidence_id}", response_model=EvidenceResponse)
 async def get_evidence(
     evidence_id: uuid.UUID,
-    _: User = Depends(_require_citation_read),
+    current_user: User = Depends(_require_citation_read),
     session: AsyncSession = Depends(get_session),
 ) -> EvidenceResponse:
-    evidence = await EvidenceClaimDraftStore(session).get_evidence(evidence_id)
+    evidence = await EvidenceClaimDraftStore(session).get_evidence(
+        evidence_id, tenant_id=current_user.tenant_id
+    )
     if evidence is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

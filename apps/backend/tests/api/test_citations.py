@@ -8,6 +8,7 @@ from stock_research.documents.draft import (
 )
 from stock_research.documents.store import DocumentStore
 from stock_research.main import app
+from stock_research.stores.models.iam import Tenant
 from stock_research.stores.session import get_session
 
 
@@ -68,5 +69,44 @@ async def test_list_and_get_evidence(db_context: Any) -> None:
         assert len(list_response.json()) == 1
         assert get_response.status_code == 200
         assert get_response.json()["content"] == "引用内容"
+    finally:
+        app.dependency_overrides.clear()
+
+
+async def test_get_evidence_rejects_cross_tenant_idor(db_context: Any) -> None:
+    app.dependency_overrides[get_session] = db_context.override
+    try:
+        async with db_context.factory() as session:
+            other_tenant = Tenant(name="other", slug="other", status="active")
+            session.add(other_tenant)
+            await session.flush()
+
+            evidence = await EvidenceClaimDraftStore(session).create_evidence(
+                EvidenceDraft(
+                    tenant_id=other_tenant.id,
+                    document_id=None,
+                    document_version_id=None,
+                    root_evidence_id=None,
+                    page=None,
+                    section=None,
+                    content="跨租户证据",
+                    source_level=None,
+                    citation_ready=False,
+                    authorization={},
+                )
+            )
+            await session.commit()
+            evidence_id = evidence.id
+
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            token = await _login(client, db_context)
+            headers = {"Authorization": f"Bearer {token}"}
+            response = await client.get(
+                f"/api/v1/citations/evidence/{evidence_id}",
+                headers=headers,
+            )
+
+        assert response.status_code == 404
     finally:
         app.dependency_overrides.clear()

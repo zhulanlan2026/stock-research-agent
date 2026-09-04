@@ -81,16 +81,29 @@ class EvidenceClaimDraftStore:
         await self.session.refresh(claim)
         return claim
 
-    async def get_evidence(self, evidence_id: uuid.UUID) -> Evidence | None:
-        return await self.session.get(Evidence, evidence_id)
+    async def get_evidence(
+        self, evidence_id: uuid.UUID, *, tenant_id: uuid.UUID
+    ) -> Evidence | None:
+        result = await self.session.execute(
+            select(Evidence).where(
+                Evidence.id == evidence_id,
+                Evidence.tenant_id == tenant_id,
+            )
+        )
+        return result.scalar_one_or_none()
 
     async def list_evidence_by_document(
         self,
         document_id: uuid.UUID,
+        *,
+        tenant_id: uuid.UUID,
     ) -> list[Evidence]:
         result = await self.session.execute(
             select(Evidence)
-            .where(Evidence.document_id == document_id)
+            .where(
+                Evidence.document_id == document_id,
+                Evidence.tenant_id == tenant_id,
+            )
             .order_by(Evidence.created_at, Evidence.id)
         )
         return list(result.scalars().all())
