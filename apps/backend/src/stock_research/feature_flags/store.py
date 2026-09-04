@@ -53,6 +53,15 @@ class FeatureFlagStore:
             raise RuntimeError("feature flag upsert did not return a row")
         return flag
 
+    async def get_flag(self, key: str, environment: str) -> FeatureFlag | None:
+        result = await self.session.execute(
+            select(FeatureFlag).where(
+                FeatureFlag.key == key,
+                FeatureFlag.environment == environment,
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def list_rules(self, flag_id: uuid.UUID) -> list[FeatureFlagRule]:
         result = await self.session.execute(
             select(FeatureFlagRule).where(FeatureFlagRule.flag_id == flag_id)

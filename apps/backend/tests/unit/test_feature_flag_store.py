@@ -1,9 +1,13 @@
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy import select
+
 from stock_research.core.feature_flags import FeatureFlagService
+from stock_research.feature_flags.evaluator import FeatureFlagEvaluator
 from stock_research.feature_flags.schemas import FeatureFlagCreate
 from stock_research.feature_flags.store import FeatureFlagStore
+from stock_research.stores.models.feature_flag import FeatureFlagExposure
 
 
 async def test_persisted_flag_drives_rollout_decision(db_context: Any) -> None:
@@ -61,3 +65,27 @@ async def test_record_exposure(db_context: Any) -> None:
 
         assert exposure.decision is True
         assert exposure.user_id == "user-1"
+
+
+async def test_evaluator_decides_and_records_exposure(db_context: Any) -> None:
+    async with db_context.factory() as session:
+        store = FeatureFlagStore(session)
+        flag = await store.upsert_flag(
+            FeatureFlagCreate(key="canary", percentage=100)
+        )
+        await session.commit()
+
+        evaluator = FeatureFlagEvaluator(session)
+        assert await evaluator.is_enabled("canary", user_id="user-1") is True
+        await session.commit()
+
+        result = await session.execute(
+            select(FeatureFlagExposure).where(
+                FeatureFlagExposure.flag_id == flag.id
+            )
+        )
+        exposures = list(result.scalars().all())
+
+        assert len(exposures) == 1
+        assert exposures[0].decision is True
+        assert exposures[0].user_id == "user-1"
