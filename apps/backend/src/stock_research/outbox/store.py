@@ -50,6 +50,16 @@ class OutboxStore:
         ).scalar_one_or_none()
         return receipt_id is not None
 
+    async def has_event(self, effect_key: str) -> bool:
+        event_id = (
+            await self.session.execute(
+                select(OutboxEvent.id)
+                .where(OutboxEvent.effect_key == effect_key)
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        return event_id is not None
+
     async def mark_sent(self, event_id: uuid.UUID) -> None:
         event = await self.session.get(OutboxEvent, event_id)
         if event is not None:

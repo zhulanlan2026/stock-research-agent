@@ -22,7 +22,7 @@ class OutboxPublisher:
         payload: dict[str, object],
     ) -> OutboxEvent | None:
         effect_key = build_effect_key(aggregate_type, aggregate_id, event_type)
-        if await self.store.has_receipt(effect_key):
+        if await self.store.has_receipt(effect_key) or await self.store.has_event(effect_key):
             return None
         return await self.store.append(
             effect_key=effect_key,
