@@ -102,6 +102,13 @@ jobs:
       - name: Run backup/restore drill
         run: bash scripts/backup_restore_drill.sh
 
+  pitr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run point-in-time recovery drill
+        run: bash scripts/pitr_drill.sh
+
   full-integration:
     runs-on: ubuntu-latest
     env:

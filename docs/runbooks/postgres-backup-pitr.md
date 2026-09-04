@@ -36,3 +36,10 @@ wal_level = replica
 - `SELECT count(*) FROM inbox_event;`
 - `SELECT count(*) FROM market_bar;`
 - `SELECT count(*) FROM financial_fact;`
+
+## 自动化演练
+
+`rc.yml` 会运行两个演练：
+
+- `scripts/backup_restore_drill.sh`：全量逻辑备份（`pg_dump`）→ 恢复（`pg_restore`）→ 校验。
+- `scripts/pitr_drill.sh`：物理备份（`pg_basebackup`）+ WAL 归档 + 按时间点恢复（`recovery_target_time`），并校验目标时间点之后的数据被正确丢弃。
