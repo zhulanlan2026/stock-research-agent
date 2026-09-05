@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.documents.normalization import NormalizedBlockDraft
@@ -73,3 +74,16 @@ class NormalizedBlockStore:
         await self.session.flush()
         await self.session.refresh(block)
         return block
+
+    async def list_blocks(
+        self, *, document_version_id: uuid.UUID | None = None
+    ) -> list[NormalizedBlock]:
+        statement = select(NormalizedBlock)
+        if document_version_id is not None:
+            statement = statement.where(
+                NormalizedBlock.document_version_id == document_version_id
+            )
+        result = await self.session.execute(
+            statement.order_by(NormalizedBlock.created_at, NormalizedBlock.id)
+        )
+        return list(result.scalars().all())
