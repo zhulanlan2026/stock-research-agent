@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     minio_secret_key: str = "minioadmin123"
     minio_secure: bool = False
 
+    embedding_base_url: str = "https://api.siliconflow.cn/v1"
+    embedding_api_key: str = ""
+    embedding_model: str = "BAAI/bge-m3"
+    embedding_dim: int = 1024
+
     collector_ingest_token: str = DEV_COLLECTOR_INGEST_TOKEN
     jwt_secret_key: str = DEV_JWT_SECRET_KEY
     jwt_algorithm: str = "HS256"

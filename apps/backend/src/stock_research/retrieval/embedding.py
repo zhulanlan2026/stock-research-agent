@@ -7,6 +7,8 @@ from typing import Protocol
 
 import httpx
 
+from stock_research.core.config import Settings
+
 _TOKEN_RE = re.compile(r"[a-zA-Z0-9_\u4e00-\u9fff]+")
 
 
@@ -61,6 +63,17 @@ class RemoteEmbeddingClient:
 
     async def aclose(self) -> None:
         await self._client.aclose()
+
+
+def build_embedding_client(settings: Settings) -> EmbeddingClient:
+    """按配置构造 embedding 客户端；未配 API key 时回退到确定性哈希。"""
+    if settings.embedding_api_key:
+        return RemoteEmbeddingClient(
+            base_url=settings.embedding_base_url,
+            api_key=settings.embedding_api_key,
+            model=settings.embedding_model,
+        )
+    return HashEmbeddingClient(dim=settings.embedding_dim)
 
 
 class EmbeddingPipeline:

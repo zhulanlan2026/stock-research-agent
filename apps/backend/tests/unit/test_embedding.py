@@ -2,10 +2,12 @@ import json
 
 import httpx
 
+from stock_research.core.config import Settings
 from stock_research.retrieval.embedding import (
     EmbeddingPipeline,
     HashEmbeddingClient,
     RemoteEmbeddingClient,
+    build_embedding_client,
 )
 
 
@@ -73,3 +75,15 @@ async def test_remote_embedding_client_embeds() -> None:
     await client.aclose()
 
     assert vectors == [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+
+
+def test_build_embedding_client_falls_back_to_hash() -> None:
+    client = build_embedding_client(Settings(embedding_api_key=""))
+
+    assert isinstance(client, HashEmbeddingClient)
+
+
+def test_build_embedding_client_uses_remote_when_key_set() -> None:
+    client = build_embedding_client(Settings(embedding_api_key="sk-test"))
+
+    assert isinstance(client, RemoteEmbeddingClient)
