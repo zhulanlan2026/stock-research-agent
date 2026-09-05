@@ -5,11 +5,13 @@ import math
 import re
 from typing import Protocol
 
+import httpx
+
 _TOKEN_RE = re.compile(r"[a-zA-Z0-9_\u4e00-\u9fff]+")
 
 
 class EmbeddingClient(Protocol):
-    def embed(self, texts: list[str]) -> list[list[float]]:
+    async def embed(self, texts: list[str]) -> list[list[float]]:
         ...
 
 
@@ -24,8 +26,41 @@ class HashEmbeddingClient:
     def __init__(self, dim: int = 768) -> None:
         self.dim = dim
 
-    def embed(self, texts: list[str]) -> list[list[float]]:
+    async def embed(self, texts: list[str]) -> list[list[float]]:
         return [_embed_one(text, self.dim) for text in texts]
+
+
+class RemoteEmbeddingClient:
+    """OpenAI 兼容的 embedding API 客户端。"""
+
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        api_key: str,
+        model: str,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._model = model
+        self._client = httpx.AsyncClient(
+            base_url=self._base_url,
+            headers={"Authorization": f"Bearer {api_key}"},
+            transport=transport,
+            timeout=60.0,
+        )
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        response = await self._client.post(
+            "/embeddings",
+            json={"model": self._model, "input": texts},
+        )
+        response.raise_for_status()
+        data = response.json()
+        return [list(item["embedding"]) for item in data["data"]]
+
+    async def aclose(self) -> None:
+        await self._client.aclose()
 
 
 class EmbeddingPipeline:
@@ -35,9 +70,9 @@ class EmbeddingPipeline:
         self._client = client
         self._index = index
 
-    def index_blocks(self, blocks: list[tuple[str, str]]) -> None:
+    async def index_blocks(self, blocks: list[tuple[str, str]]) -> None:
         texts = [text for _, text in blocks]
-        vectors = self._client.embed(texts)
+        vectors = await self._client.embed(texts)
         for (block_id, _), vector in zip(blocks, vectors, strict=True):
             self._index.add(block_id, vector)
 

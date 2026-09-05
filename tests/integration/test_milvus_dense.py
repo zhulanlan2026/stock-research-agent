@@ -52,7 +52,7 @@ def test_hybrid_pipeline_uses_milvus_dense() -> None:
     assert "b" in results
 
 
-def test_embedding_pipeline_writes_and_retrieves_from_milvus() -> None:
+async def test_embedding_pipeline_writes_and_retrieves_from_milvus() -> None:
     collection_name = f"test_embedding_{uuid.uuid4().hex[:8]}"
     try:
         milvus = MilvusDenseIndex(
@@ -65,11 +65,11 @@ def test_embedding_pipeline_writes_and_retrieves_from_milvus() -> None:
 
     client = HashEmbeddingClient(dim=64)
     pipeline = EmbeddingPipeline(client, milvus)
-    pipeline.index_blocks(
+    await pipeline.index_blocks(
         [("b1", "白酒 营收 净利润 增长"), ("b2", "芯片 半导体 光刻机")]
     )
 
-    query_vector = client.embed(["白酒 营收"])[0]
+    query_vector = (await client.embed(["白酒 营收"]))[0]
     results = milvus.search(query_vector, top_k=1)
 
     assert results[0][0] == "b1"
