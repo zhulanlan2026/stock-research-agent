@@ -40,6 +40,8 @@ class HumanReviewService:
         decision: str,
         *,
         comment: str | None = None,
+        reason_code: str | None = None,
+        duration_ms: int | None = None,
         event_time: datetime | None = None,
     ) -> HumanReviewEvent:
         if decision not in VALID_DECISIONS:
@@ -51,6 +53,8 @@ class HumanReviewService:
             to_status=decision,
             event_time=event_time,
             comment=comment,
+            reason_code=reason_code,
+            duration_ms=duration_ms,
         )
         review.status = decision
         review.decision = decision

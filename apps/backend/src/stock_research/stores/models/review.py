@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stock_research.stores.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -34,3 +34,5 @@ class HumanReviewEvent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     to_status: Mapped[str] = mapped_column(String(32), nullable=False)
     event_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     comment: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    reason_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)

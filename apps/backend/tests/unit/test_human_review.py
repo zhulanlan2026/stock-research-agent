@@ -33,3 +33,24 @@ async def test_human_review_service_rejects_invalid_decision(db_context: Any) ->
 
         with pytest.raises(ValueError):
             await service.decide(review, "MAYBE")
+
+
+async def test_human_review_records_audit_fields(db_context: Any) -> None:
+    async with db_context.factory() as session:
+        service = HumanReviewService(session)
+        review = await service.create(
+            tenant_id=db_context.tenant_id,
+            target_type="report",
+            target_id="report-1",
+            reviewer_id=db_context.user_id,
+        )
+        event = await service.decide(
+            review,
+            "NEEDS_REVISION",
+            reason_code="RISK_HIGH",
+            duration_ms=1200,
+        )
+        await session.commit()
+
+        assert event.reason_code == "RISK_HIGH"
+        assert event.duration_ms == 1200
