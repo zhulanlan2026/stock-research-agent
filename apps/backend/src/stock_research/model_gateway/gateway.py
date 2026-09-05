@@ -27,6 +27,9 @@ class ModelRequest:
 class ModelResponse:
     content: str
     model: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    latency_ms: int = 0
 
 
 class ModelClient(Protocol):

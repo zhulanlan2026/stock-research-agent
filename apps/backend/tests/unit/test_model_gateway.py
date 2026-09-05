@@ -3,7 +3,7 @@ import json
 import httpx
 import pytest
 
-from stock_research.model_gateway.deepseek import DeepSeekClient
+from stock_research.model_gateway.deepseek import DeepSeekClient, estimate_cost
 from stock_research.model_gateway.discovery import ModelDescriptor, ModelDiscoveryService
 from stock_research.model_gateway.gateway import (
     ModelGateway,
@@ -109,6 +109,7 @@ def _fake_transport() -> httpx.MockTransport:
             json={
                 "model": "deepseek-v4-pro",
                 "choices": [{"message": {"content": "hi"}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 5},
             },
         )
 
@@ -131,3 +132,12 @@ async def test_deepseek_client_completes_request() -> None:
     await client.aclose()
 
     assert response.content == "hi"
+    assert response.input_tokens == 12
+    assert response.output_tokens == 5
+    assert response.latency_ms >= 0
+
+
+def test_estimate_cost_uses_deepseek_pricing() -> None:
+    cost = estimate_cost("deepseek-chat", 1_000_000, 1_000_000)
+
+    assert cost == pytest.approx(0.27 + 1.10, abs=1e-6)
