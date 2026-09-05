@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.stores.models.supply_chain import Contract, Order
@@ -62,3 +63,12 @@ class SupplyChainStore:
         await self.session.flush()
         await self.session.refresh(order)
         return order
+
+    async def list_contracts(
+        self, *, tenant_id: uuid.UUID | None = None
+    ) -> list[Contract]:
+        statement = select(Contract)
+        if tenant_id is not None:
+            statement = statement.where(Contract.tenant_id == tenant_id)
+        result = await self.session.execute(statement.order_by(Contract.created_at))
+        return list(result.scalars().all())
