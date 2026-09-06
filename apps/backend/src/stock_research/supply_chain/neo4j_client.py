@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from neo4j import Driver, GraphDatabase, Session
@@ -16,6 +17,12 @@ class _SessionAdapter:
         return self._session.run(query, **params)
 
 
+@dataclass(frozen=True)
+class GraphData:
+    nodes: list[str]
+    edges: list[tuple[str, str, str]]  # (source, predicate, target)
+
+
 class Neo4jPublisher:
     """连接真实 Neo4j，发布审核通过的图候选。"""
 
@@ -27,6 +34,22 @@ class Neo4jPublisher:
             return Neo4jPublishService().publish(
                 _SessionAdapter(session), candidate, evidence_ids
             )
+
+    def list_graph(self) -> GraphData:
+        with self._driver.session() as session:
+            nodes_result = session.run(
+                "MATCH (n:Organization) RETURN n.name AS name ORDER BY n.name"
+            )
+            nodes = [record["name"] for record in nodes_result]
+            edges_result = session.run(
+                "MATCH (a:Organization)-[r:REL]->(b:Organization) "
+                "RETURN a.name AS source, r.predicate AS predicate, b.name AS target"
+            )
+            edges = [
+                (record["source"], record["predicate"], record["target"])
+                for record in edges_result
+            ]
+        return GraphData(nodes=nodes, edges=edges)
 
     def close(self) -> None:
         self._driver.close()

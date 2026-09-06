@@ -2,27 +2,34 @@
 import * as echarts from 'echarts';
 import { onMounted, ref } from 'vue';
 
-type GraphNode = { id: string; name: string };
-type GraphEdge = { source: string; target: string; predicate: string };
+import { http } from '../api/client';
 
 const chartRef = ref<HTMLDivElement | null>(null);
+const loading = ref(false);
+const error = ref('');
 
-const nodes: GraphNode[] = [
-  { id: 'A', name: '贵州茅台' },
-  { id: 'B', name: '供应商B' },
-  { id: 'C', name: '客户C' },
-];
+let chart: echarts.ECharts | null = null;
 
-const edges: GraphEdge[] = [
-  { source: 'A', target: 'B', predicate: 'procured_from' },
-  { source: 'A', target: 'C', predicate: 'sold_to' },
-];
+async function loadGraph(): Promise<void> {
+  loading.value = true;
+  error.value = '';
+  try {
+    const { data } = await http.get('/supply-chain/graph');
+    renderGraph(data.nodes, data.edges);
+  } catch (err: any) {
+    error.value = err?.response?.data?.detail?.message || '加载供应链图失败';
+  } finally {
+    loading.value = false;
+  }
+}
 
-onMounted(() => {
+function renderGraph(nodes: string[], edges: any[]): void {
   if (!chartRef.value) {
     return;
   }
-  const chart = echarts.init(chartRef.value);
+  if (!chart) {
+    chart = echarts.init(chartRef.value);
+  }
   chart.setOption({
     title: { text: '供应链图' },
     tooltip: {},
@@ -31,7 +38,7 @@ onMounted(() => {
         type: 'graph',
         layout: 'force',
         roam: true,
-        data: nodes.map((node) => ({ id: node.id, name: node.name })),
+        data: nodes.map((name) => ({ id: name, name })),
         links: edges.map((edge) => ({
           source: edge.source,
           target: edge.target,
@@ -42,12 +49,16 @@ onMounted(() => {
       },
     ],
   });
-});
+}
+
+onMounted(loadGraph);
 </script>
 
 <template>
   <section class="supply-chain-view">
     <h1>供应链图</h1>
+    <p v-if="loading">加载中…</p>
+    <p v-if="error" class="error">{{ error }}</p>
     <div ref="chartRef" class="graph-chart"></div>
   </section>
 </template>
@@ -61,5 +72,9 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   min-height: 500px;
+}
+
+.error {
+  color: #b91c1c;
 }
 </style>

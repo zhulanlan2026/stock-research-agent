@@ -29,6 +29,10 @@ class Settings(BaseSettings):
 
     milvus_uri: str = "http://localhost:19530"
 
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_user: str = "neo4j"
+    neo4j_password: str = "password123"
+
     collector_ingest_token: str = DEV_COLLECTOR_INGEST_TOKEN
     jwt_secret_key: str = DEV_JWT_SECRET_KEY
     jwt_algorithm: str = "HS256"
