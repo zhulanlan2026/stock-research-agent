@@ -27,3 +27,21 @@ class TaskResponse(BaseModel):
     question: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class ReportRequest(BaseModel):
+    symbol: str = Field(min_length=1, max_length=32)
+    mode: str = Field(pattern="^(quick|standard|deep)$", default="standard")
+    as_of: datetime | None = None
+
+
+class ReportSectionResponse(BaseModel):
+    title: str
+    data: dict[str, object]
+
+
+class ReportResponse(BaseModel):
+    symbol: str
+    as_of: datetime
+    module_version: str
+    sections: list[ReportSectionResponse]

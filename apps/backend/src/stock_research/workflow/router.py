@@ -1,14 +1,23 @@
 import uuid
 from collections.abc import AsyncGenerator
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.auth.dependencies import get_current_user
+from stock_research.fundamental.report import ReportService
+from stock_research.fundamental.research import DEFAULT_SCENARIOS, StandardResearchService
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
-from stock_research.workflow.schemas import TaskCreateRequest, TaskResponse
+from stock_research.workflow.schemas import (
+    ReportRequest,
+    ReportResponse,
+    ReportSectionResponse,
+    TaskCreateRequest,
+    TaskResponse,
+)
 from stock_research.workflow.sse import format_sse, parse_last_event_id
 from stock_research.workflow.store import WorkflowEventStore
 
@@ -43,6 +52,31 @@ async def create_task(
     )
     await session.commit()
     return TaskResponse.model_validate(task)
+
+
+@router.post("/reports", response_model=ReportResponse, status_code=status.HTTP_200_OK)
+async def generate_report(
+    body: ReportRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> ReportResponse:
+    as_of = body.as_of or datetime.now(timezone.utc)
+    result = await StandardResearchService(session).run(
+        symbol=body.symbol,
+        as_of=as_of,
+        scenarios=list(DEFAULT_SCENARIOS),
+        peers=[],
+    )
+    report = ReportService().render(result)
+    return ReportResponse(
+        symbol=report.symbol,
+        as_of=report.as_of,
+        module_version=report.module_version,
+        sections=[
+            ReportSectionResponse(title=section.title, data=section.data)
+            for section in report.sections
+        ],
+    )
 
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)

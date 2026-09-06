@@ -12,6 +12,12 @@ from stock_research.fundamental.snapshot import SnapshotEngine, UnifiedSnapshot
 
 STANDARD_RESEARCH_VERSION = "standard_research:1.0.0"
 
+DEFAULT_SCENARIOS = (
+    ScenarioAssumption(name="BASE", pe=Decimal("20")),
+    ScenarioAssumption(name="BULL", pe=Decimal("28")),
+    ScenarioAssumption(name="BEAR", pe=Decimal("14")),
+)
+
 
 @dataclass(frozen=True)
 class StandardResearchResult:
