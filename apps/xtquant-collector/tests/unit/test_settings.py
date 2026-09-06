@@ -5,7 +5,8 @@ from pytest import MonkeyPatch
 from xtquant_collector.config.settings import CollectorSettings
 
 
-def test_settings_defaults() -> None:
+def test_settings_defaults(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.delenv("COLLECTOR_COLLECT_SYMBOLS", raising=False)
     settings = CollectorSettings(_env_file=None)  # type: ignore[call-arg]
     assert settings.backend_url == "http://localhost:8000/api/v1"
     assert settings.wal_path == "./data/collector-local-wal.sqlite"
