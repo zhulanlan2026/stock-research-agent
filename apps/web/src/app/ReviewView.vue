@@ -1,24 +1,54 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
-type ReviewItem = { id: string; target: string; status: string };
+import { http } from '../api/client';
 
-const items = ref<ReviewItem[]>([
-  { id: 'review-1', target: 'report-1', status: 'REVIEW_REQUIRED' },
-  { id: 'review-2', target: 'report-2', status: 'UNDER_REVIEW' },
-]);
+type ReviewItem = {
+  id: string;
+  target_type: string;
+  target_id: string;
+  status: string;
+  decision: string | null;
+};
 
-function decide(id: string, decision: string): void {
-  const item = items.value.find((entry) => entry.id === id);
-  if (item) {
-    item.status = decision;
+const items = ref<ReviewItem[]>([]);
+const loading = ref(false);
+const error = ref('');
+
+async function loadQueue(): Promise<void> {
+  loading.value = true;
+  error.value = '';
+  try {
+    const { data } = await http.get('/reviews/queue');
+    items.value = data;
+  } catch (err: any) {
+    error.value = err?.response?.data?.detail?.message || '加载审核队列失败';
+  } finally {
+    loading.value = false;
   }
 }
+
+async function decide(id: string, decision: string): Promise<void> {
+  error.value = '';
+  try {
+    await http.post(`/reviews/${id}/decision`, { decision });
+    await loadQueue();
+  } catch (err: any) {
+    error.value = err?.response?.data?.detail?.message || '提交决策失败';
+  }
+}
+
+onMounted(loadQueue);
 </script>
 
 <template>
   <section class="review-view">
     <h1>人工审核</h1>
+    <div class="toolbar">
+      <button type="button" @click="loadQueue">刷新</button>
+    </div>
+    <p v-if="loading">加载中…</p>
+    <p v-if="error" class="error">{{ error }}</p>
     <table>
       <thead>
         <tr>
@@ -31,13 +61,16 @@ function decide(id: string, decision: string): void {
       <tbody>
         <tr v-for="item in items" :key="item.id">
           <td>{{ item.id }}</td>
-          <td>{{ item.target }}</td>
+          <td>{{ item.target_type }}:{{ item.target_id }}</td>
           <td>{{ item.status }}</td>
           <td>
             <button @click="decide(item.id, 'APPROVED')">通过</button>
             <button @click="decide(item.id, 'NEEDS_REVISION')">退回</button>
             <button @click="decide(item.id, 'REJECTED')">拒绝</button>
           </td>
+        </tr>
+        <tr v-if="items.length === 0 && !loading">
+          <td colspan="4">暂无待审核项</td>
         </tr>
       </tbody>
     </table>
@@ -55,5 +88,13 @@ function decide(id: string, decision: string): void {
   border: 1px solid #e5e7eb;
   padding: 0.5rem;
   text-align: left;
+}
+
+.toolbar {
+  margin: 0.75rem 0;
+}
+
+.error {
+  color: #b91c1c;
 }
 </style>

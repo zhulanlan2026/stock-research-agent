@@ -24,6 +24,7 @@ from stock_research.iam.router import router as iam_router
 from stock_research.ingest.router import router as ingest_router
 from stock_research.market.consumer import MarketDataConsumer
 from stock_research.market.router import router as market_router
+from stock_research.review.router import router as review_router
 from stock_research.stores.session import session_factory
 from stock_research.supply_chain.router import router as supply_chain_router
 from stock_research.user_settings.router import router as user_settings_router
@@ -77,6 +78,7 @@ def create_app() -> FastAPI:
     app.include_router(user_settings_router, prefix=settings.api_v1_prefix)
     app.include_router(workflow_router, prefix=settings.api_v1_prefix)
     app.include_router(supply_chain_router, prefix=settings.api_v1_prefix)
+    app.include_router(review_router, prefix=settings.api_v1_prefix)
     return app
 
 

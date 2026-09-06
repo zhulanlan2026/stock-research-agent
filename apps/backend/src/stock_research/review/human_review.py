@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.stores.models.review import HumanReview, HumanReviewEvent
@@ -62,3 +63,30 @@ class HumanReviewService:
         await self.session.flush()
         await self.session.refresh(event)
         return event
+
+    async def get(
+        self, review_id: uuid.UUID, *, tenant_id: uuid.UUID
+    ) -> HumanReview | None:
+        result = await self.session.execute(
+            select(HumanReview).where(
+                HumanReview.id == review_id,
+                HumanReview.tenant_id == tenant_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def list_queue(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        statuses: tuple[str, ...] = ("REVIEW_REQUIRED", "UNDER_REVIEW"),
+    ) -> list[HumanReview]:
+        result = await self.session.execute(
+            select(HumanReview)
+            .where(
+                HumanReview.tenant_id == tenant_id,
+                HumanReview.status.in_(statuses),
+            )
+            .order_by(HumanReview.created_at)
+        )
+        return list(result.scalars().all())
