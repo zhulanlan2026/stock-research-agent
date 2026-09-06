@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-m3"
     embedding_dim: int = 1024
 
+    milvus_uri: str = "http://localhost:19530"
+
     collector_ingest_token: str = DEV_COLLECTOR_INGEST_TOKEN
     jwt_secret_key: str = DEV_JWT_SECRET_KEY
     jwt_algorithm: str = "HS256"

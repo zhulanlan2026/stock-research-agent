@@ -19,6 +19,16 @@ class DenseVectorIndex(Protocol):
         ...
 
 
+class DenseIndexer(Protocol):
+    async def index_blocks(
+        self,
+        *,
+        document_version_id: uuid.UUID | None = None,
+        batch_size: int = 32,
+    ) -> int:
+        ...
+
+
 class DenseIndexingService:
     """端到端：文档块 -> embedding -> 向量索引 -> Dense 检索。"""
 

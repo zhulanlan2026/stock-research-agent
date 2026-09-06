@@ -4,7 +4,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from stock_research.documents.dependencies import get_raw_object_store
+from stock_research.documents.dependencies import (
+    get_document_indexing_service,
+    get_raw_object_store,
+)
+from stock_research.documents.indexing import DocumentIndexingService
 from stock_research.documents.parser_router import ParserRouter
 from stock_research.documents.schemas import DocumentUploadResponse
 from stock_research.documents.security import FileSecurityService
@@ -32,6 +36,7 @@ async def upload_file(
     current_user: User = Depends(_require_upload),
     session: AsyncSession = Depends(get_session),
     object_store: RawObjectStore = Depends(get_raw_object_store),
+    indexing: DocumentIndexingService | None = Depends(get_document_indexing_service),
 ) -> DocumentUploadResponse:
     data = await file.read()
     security = FileSecurityService().validate(
@@ -70,6 +75,14 @@ async def upload_file(
         parser_version=parser_route.parser_version,
     )
     await session.commit()
+
+    if indexing is not None:
+        await indexing.process(
+            document_version_id=version.id,
+            parser_name=parser_route.parser,
+            raw_content=data,
+            filename=safe_filename,
+        )
 
     return DocumentUploadResponse(
         document_id=document.id,
