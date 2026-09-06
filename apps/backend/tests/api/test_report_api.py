@@ -31,6 +31,8 @@ async def test_generate_report(db_context: Any) -> None:
         assert response.status_code == 200
         data = response.json()
         assert data["symbol"] == "600519.SH"
+        assert "summary" in data
+        assert data["summary"]
         assert len(data["sections"]) >= 5
         overview = next(section for section in data["sections"] if section["title"] == "概览")
         assert "risk_level" in overview["data"]

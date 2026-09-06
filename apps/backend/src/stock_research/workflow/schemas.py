@@ -44,4 +44,5 @@ class ReportResponse(BaseModel):
     symbol: str
     as_of: datetime
     module_version: str
+    summary: str
     sections: list[ReportSectionResponse]

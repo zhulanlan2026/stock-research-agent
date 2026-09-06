@@ -25,6 +25,7 @@ class ReportResult:
     symbol: str
     as_of: datetime
     module_version: str
+    summary: str
     sections: list[ReportSection]
 
 
@@ -39,6 +40,7 @@ class ReportService:
             symbol=result.symbol,
             as_of=result.as_of,
             module_version=self.module_version,
+            summary=_chinese_summary(result),
             sections=[
                 ReportSection(
                     "概览",
@@ -68,6 +70,51 @@ class ReportService:
                 ),
             ],
         )
+
+
+_RISK_ZH = {
+    "HIGH": "高风险",
+    "MEDIUM": "中等风险",
+    "LOW": "低风险",
+    "UNKNOWN": "风险未知",
+}
+_DECISION_ZH = {
+    "AVOID": "规避",
+    "HOLD": "持有观望",
+    "ATTRACTIVE": "具备吸引力",
+    "INSUFFICIENT_DATA": "数据不足，暂无法判断",
+}
+
+
+def _chinese_summary(result: StandardResearchResult) -> str:
+    snapshot = result.snapshot
+    risk_level = snapshot.risk.risk_level
+    decision = (
+        snapshot.decision.decision
+        if snapshot.decision is not None
+        else "INSUFFICIENT_DATA"
+    )
+
+    parts = [
+        f"{result.symbol} 当前为{_RISK_ZH.get(risk_level, risk_level)}，"
+        f"综合决策建议「{_DECISION_ZH.get(decision, decision)}」。"
+    ]
+
+    pe = snapshot.valuation.multiples.get("pe")
+    if pe is not None:
+        parts.append(f"市盈率（PE）约 {pe:.2f} 倍。")
+
+    scenario = snapshot.scenario
+    if scenario is not None:
+        base = next(
+            (point for point in scenario.scenarios if point.name == "BASE"),
+            None,
+        )
+        if base is not None and base.target_price is not None:
+            parts.append(f"基准情景目标价 {base.target_price} 元。")
+
+    parts.append(f"数据覆盖度 {result.coverage:.0%}。")
+    return "".join(parts)
 
 
 def _valuation_data(valuation: ValuationSnapshot) -> dict[str, Any]:

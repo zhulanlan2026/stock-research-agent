@@ -72,6 +72,7 @@ async def generate_report(
         symbol=report.symbol,
         as_of=report.as_of,
         module_version=report.module_version,
+        summary=report.summary,
         sections=[
             ReportSectionResponse(title=section.title, data=section.data)
             for section in report.sections

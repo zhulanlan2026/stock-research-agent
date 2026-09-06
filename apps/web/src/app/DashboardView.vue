@@ -58,6 +58,7 @@ async function generateReport(): Promise<void> {
     <div v-if="report" class="report">
       <h2>报告：{{ report.symbol }}</h2>
       <p class="meta">as_of: {{ report.as_of }} · {{ report.module_version }}</p>
+      <p class="summary">{{ report.summary }}</p>
       <div
         v-for="section in report.sections"
         :key="section.title"
@@ -101,5 +102,12 @@ async function generateReport(): Promise<void> {
 .meta {
   color: #6b7280;
   font-size: 0.85rem;
+}
+
+.summary {
+  padding: 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
 }
 </style>
