@@ -5,6 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
+from stock_research.fundamental.engine import FundamentalSnapshot
 from stock_research.fundamental.peer import PeerComparison
 from stock_research.fundamental.research import StandardResearchResult
 from stock_research.fundamental.risk import RiskSnapshot
@@ -51,6 +52,10 @@ class ReportService:
                         else "INSUFFICIENT_DATA",
                         "coverage": str(result.coverage),
                     },
+                ),
+                ReportSection(
+                    "财务",
+                    _fundamental_data(snapshot.fundamental),
                 ),
                 ReportSection(
                     "估值",
@@ -104,6 +109,13 @@ def _chinese_summary(result: StandardResearchResult) -> str:
     if pe is not None:
         parts.append(f"市盈率（PE）约 {pe:.2f} 倍。")
 
+    net_income = snapshot.fundamental.metrics.get("net_income")
+    if net_income is not None:
+        parts.append(f"净利润 {net_income} 元。")
+    roe = snapshot.fundamental.ratios.get("roe")
+    if roe is not None:
+        parts.append(f"净资产收益率（ROE）约 {roe:.2%}。")
+
     scenario = snapshot.scenario
     if scenario is not None:
         base = next(
@@ -125,6 +137,25 @@ def _valuation_data(valuation: ValuationSnapshot) -> dict[str, Any]:
         "pb": _decimal_str(valuation.multiples["pb"]),
         "ps": _decimal_str(valuation.multiples["ps"]),
         "market_cap": _decimal_str(valuation.market_cap),
+    }
+
+
+def _fundamental_data(fundamental: FundamentalSnapshot) -> dict[str, Any]:
+    return {
+        "营收": _decimal_str(fundamental.metrics["revenue"]),
+        "净利润": _decimal_str(fundamental.metrics["net_income"]),
+        "总资产": _decimal_str(fundamental.metrics["total_assets"]),
+        "总负债": _decimal_str(fundamental.metrics["total_liabilities"]),
+        "总权益": _decimal_str(fundamental.metrics["total_equity"]),
+        "毛利率": _decimal_str(fundamental.ratios["gross_margin"]),
+        "净利率": _decimal_str(fundamental.ratios["net_margin"]),
+        "ROE": _decimal_str(fundamental.ratios["roe"]),
+        "ROA": _decimal_str(fundamental.ratios["roa"]),
+        "负债权益比": _decimal_str(fundamental.ratios["debt_to_equity"]),
+        "流动比率": _decimal_str(fundamental.ratios["current_ratio"]),
+        "现金流/净利润": _decimal_str(
+            fundamental.ratios["operating_cash_flow_to_net_income"]
+        ),
     }
 
 

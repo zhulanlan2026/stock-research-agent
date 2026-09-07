@@ -33,8 +33,10 @@ async def test_generate_report(db_context: Any) -> None:
         assert data["symbol"] == "600519.SH"
         assert "summary" in data
         assert data["summary"]
-        assert len(data["sections"]) >= 5
+        assert len(data["sections"]) >= 6
         overview = next(section for section in data["sections"] if section["title"] == "概览")
         assert "risk_level" in overview["data"]
+        financial = next(section for section in data["sections"] if section["title"] == "财务")
+        assert "净利润" in financial["data"]
     finally:
         app.dependency_overrides.clear()
