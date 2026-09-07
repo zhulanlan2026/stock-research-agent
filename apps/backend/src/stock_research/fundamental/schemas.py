@@ -38,3 +38,17 @@ class FinancialFactResponse(BaseModel):
     fact_metadata: dict[str, object]
     created_at: datetime
     updated_at: datetime
+
+
+class FundamentalAnalysisRequest(BaseModel):
+    symbol: str = Field(min_length=1, max_length=32)
+    as_of: datetime | None = None
+
+
+class FundamentalAnalysisResponse(BaseModel):
+    symbol: str
+    as_of: datetime
+    coverage: float
+    summary: str
+    metrics: dict[str, object]
+    ratios: dict[str, object]

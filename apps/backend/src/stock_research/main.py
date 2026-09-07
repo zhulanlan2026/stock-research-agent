@@ -20,6 +20,7 @@ from stock_research.core.logging import configure_logging
 from stock_research.core.middleware import RequestContextMiddleware
 from stock_research.documents.citation_router import router as citation_router
 from stock_research.documents.router import router as documents_router
+from stock_research.fundamental.router import router as fundamental_router
 from stock_research.iam.router import router as iam_router
 from stock_research.ingest.router import router as ingest_router
 from stock_research.market.consumer import MarketDataConsumer
@@ -72,6 +73,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix=settings.api_v1_prefix)
     app.include_router(documents_router, prefix=settings.api_v1_prefix)
     app.include_router(citation_router, prefix=settings.api_v1_prefix)
+    app.include_router(fundamental_router, prefix=settings.api_v1_prefix)
     app.include_router(iam_router, prefix=settings.api_v1_prefix)
     app.include_router(ingest_router, prefix=settings.api_v1_prefix)
     app.include_router(market_router, prefix=settings.api_v1_prefix)

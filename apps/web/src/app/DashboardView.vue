@@ -11,6 +11,10 @@ const mode = ref('standard');
 const loading = ref(false);
 const error = ref('');
 const report = ref<Record<string, any> | null>(null);
+const faSymbol = ref('600519.SH');
+const faLoading = ref(false);
+const faError = ref('');
+const faResult = ref<Record<string, any> | null>(null);
 
 async function generateReport(): Promise<void> {
   loading.value = true;
@@ -28,12 +32,46 @@ async function generateReport(): Promise<void> {
     loading.value = false;
   }
 }
+
+async function analyzeFundamental(): Promise<void> {
+  faLoading.value = true;
+  faError.value = '';
+  faResult.value = null;
+  try {
+    const { data } = await http.post('/fundamental/analysis', {
+      symbol: faSymbol.value,
+    });
+    faResult.value = data;
+  } catch (err: any) {
+    faError.value = err?.response?.data?.detail?.message || '财务分析失败';
+  } finally {
+    faLoading.value = false;
+  }
+}
 </script>
 
 <template>
   <section class="dashboard">
     <h1>研股工作台</h1>
     <p>当前登录：{{ auth.user?.email }}</p>
+
+    <div class="report-form">
+      <label>
+        股票代码
+        <input v-model="faSymbol" placeholder="例如 600519.SH" />
+      </label>
+      <button type="button" :disabled="faLoading" @click="analyzeFundamental">
+        {{ faLoading ? '分析中…' : '财务分析' }}
+      </button>
+    </div>
+
+    <p v-if="faError" class="error">{{ faError }}</p>
+
+    <div v-if="faResult" class="report-section">
+      <h3>财务分析</h3>
+      <p class="summary">{{ faResult.summary }}</p>
+      <pre>{{ JSON.stringify({ metrics: faResult.metrics, ratios: faResult.ratios }, null, 2) }}</pre>
+    </div>
 
     <div class="report-form">
       <label>
