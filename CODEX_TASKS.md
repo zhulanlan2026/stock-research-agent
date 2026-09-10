@@ -55,6 +55,10 @@
 - [x] C1-035 Realtime Snapshot Skill（实时快照读取与 stale 标记）
 - [x] C1-036 Technical Engine / Market Engine（确定性引擎边界）
 - [x] C1-037 Reconnect / Gap Tests（WAL 失败重试、行情缺口检测测试）
+- [x] C1-038 XTQuant 公告/新闻采集骨架与 announcement provider
+- [x] C1-039 FFT 主导周期识别与 Haar 小波能量分解
+- [x] C1-040 可选 PyTorch LSTM 周期预测适配器
+- [x] C1-041 周期分析 API、前端图表与 Prometheus 指标
 
 P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 
@@ -130,6 +134,10 @@ P1 完成：V2.0 P1 规范任务与 Gate 已补齐，可正式进入 P2。
 - [x] C5-016 HITL Metrics（审核决策指标计算）
 - [x] C5-017 Outbox Publish（正式副作用发布入口 / 幂等）
 - [x] C5-018 Agent Security Tests（Skill/Policy/ACL/Graph 安全回归）
+- [x] C5-019 AgentRegistry / AgentOrchestrator（LangGraph 优先，确定性并行 fallback）
+- [x] C5-020 Controlled ReAct runtime / Skill 白名单 / Token 预算 / 审计
+- [x] C5-021 `POST /research/tasks` 触发 LangGraph 多 Agent DAG
+- [x] C5-022 NewsAgent 从 `market_news` 确定性事实读取，不伪造新闻
 
 ## P6 Production Readiness
 
