@@ -21,15 +21,15 @@ contracts-check: openapi api-types
 
 test:
 	uv run pytest
-	pnpm test
+	pnpm --filter @stock-research/web test
 
 lint:
 	uv run ruff check .
-	pnpm lint
+	pnpm --filter @stock-research/web lint
 
 typecheck:
 	uv run mypy .
-	pnpm typecheck
+	pnpm --filter @stock-research/web typecheck
 
 infra-up:
 	docker compose up -d postgres redis minio etcd minio-milvus milvus neo4j
