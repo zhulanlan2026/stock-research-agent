@@ -9,8 +9,10 @@ from xtquant_collector.wal import WalStore
 from xtquant_collector.xtquant import (
     MarketDataSource,
     QuoteEvent,
+    XtQuantAnnouncementProvider,
     XtQuantBarFetcher,
     XtQuantMarketDataSource,
+    XtQuantNewsFetcher,
 )
 
 logger = structlog.get_logger(__name__)
@@ -23,6 +25,7 @@ class Collector:
         *,
         data_source: MarketDataSource | None = None,
         bar_fetcher: XtQuantBarFetcher | None = None,
+        news_fetcher: XtQuantNewsFetcher | None = None,
     ) -> None:
         self.settings = settings
         self.wal = WalStore(settings.wal_path)
@@ -30,6 +33,11 @@ class Collector:
         self.pump = WALPump(self.wal, self.ingest_client)
         self.data_source = data_source if data_source is not None else XtQuantMarketDataSource()
         self.bar_fetcher = bar_fetcher if bar_fetcher is not None else XtQuantBarFetcher()
+        self.news_fetcher = (
+            news_fetcher
+            if news_fetcher is not None
+            else XtQuantNewsFetcher(XtQuantAnnouncementProvider())
+        )
         self.event_queue: asyncio.Queue[QuoteEvent] = asyncio.Queue()
         self._loop: asyncio.AbstractEventLoop | None = None
 
@@ -40,6 +48,8 @@ class Collector:
         symbols = self.settings.symbol_list
         if symbols and self.settings.period_list:
             self._fetch_history_bars(symbols)
+        if symbols and self.settings.collect_news_enabled:
+            self._fetch_news(symbols)
         self._loop = asyncio.get_running_loop()
         if symbols:
             self.data_source.start(symbols, self._enqueue_event)
@@ -71,6 +81,17 @@ class Collector:
             for bar in bars:
                 self.wal.append(bar.event_id, bar.event_type, bar.payload)
             logger.info("xtquant history fetched", period=period, count=len(bars))
+
+    def _fetch_news(self, symbols: list[str]) -> None:
+        for kind in self.settings.news_kind_list:
+            try:
+                events = self.news_fetcher.fetch(symbols, kind)
+            except Exception:
+                logger.exception("xtquant news fetch failed", kind=kind)
+                continue
+            for event in events:
+                self.wal.append(event.event_id, event.event_type, event.payload)
+            logger.info("xtquant news fetched", kind=kind, count=len(events))
 
     def _enqueue_event(self, event: QuoteEvent) -> None:
         if self._loop is None:

@@ -11,6 +11,8 @@ def test_settings_defaults(monkeypatch: MonkeyPatch) -> None:
     assert settings.backend_url == "http://localhost:8000/api/v1"
     assert settings.wal_path == "./data/collector-local-wal.sqlite"
     assert settings.symbol_list == []
+    assert settings.news_kind_list == ["announcement"]
+    assert settings.collect_news_enabled is False
     assert settings.poll_interval_seconds == 1.0
     assert settings.log_level == "INFO"
 
@@ -31,5 +33,13 @@ def test_settings_rejects_unsupported_period() -> None:
     with pytest.raises(ValidationError):
         CollectorSettings(  # type: ignore[call-arg]
             collect_periods="1m,2m",
+            _env_file=None,
+        )
+
+
+def test_settings_rejects_unsupported_news_kind() -> None:
+    with pytest.raises(ValidationError):
+        CollectorSettings(  # type: ignore[call-arg]
+            collect_news_kinds="announcement,rss",
             _env_file=None,
         )
