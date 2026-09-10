@@ -6,28 +6,55 @@ import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();
 
+type ReportSection = {
+  title: string;
+  data: Record<string, unknown>;
+};
+
+type ReportResponse = {
+  symbol: string;
+  as_of: string;
+  module_version: string;
+  summary: string;
+  sections: ReportSection[];
+};
+
+type FundamentalAnalysisResponse = {
+  summary: string;
+  metrics: Record<string, unknown>;
+  ratios: Record<string, unknown>;
+};
+
 const symbol = ref('600519.SH');
 const mode = ref('standard');
 const loading = ref(false);
 const error = ref('');
-const report = ref<Record<string, any> | null>(null);
+const report = ref<ReportResponse | null>(null);
 const faSymbol = ref('600519.SH');
 const faLoading = ref(false);
 const faError = ref('');
-const faResult = ref<Record<string, any> | null>(null);
+const faResult = ref<FundamentalAnalysisResponse | null>(null);
+
+function errorMessage(err: unknown, fallback: string): string {
+  if (typeof err !== 'object' || err === null) {
+    return fallback;
+  }
+  const response = (err as { response?: { data?: { detail?: { message?: string } } } }).response;
+  return response?.data?.detail?.message || fallback;
+}
 
 async function generateReport(): Promise<void> {
   loading.value = true;
   error.value = '';
   report.value = null;
   try {
-    const { data } = await http.post('/research/reports', {
+    const { data } = await http.post<ReportResponse>('/research/reports', {
       symbol: symbol.value,
       mode: mode.value,
     });
     report.value = data;
-  } catch (err: any) {
-    error.value = err?.response?.data?.detail?.message || '生成报告失败';
+  } catch (err: unknown) {
+    error.value = errorMessage(err, '生成报告失败');
   } finally {
     loading.value = false;
   }
@@ -38,12 +65,12 @@ async function analyzeFundamental(): Promise<void> {
   faError.value = '';
   faResult.value = null;
   try {
-    const { data } = await http.post('/fundamental/analysis', {
+    const { data } = await http.post<FundamentalAnalysisResponse>('/fundamental/analysis', {
       symbol: faSymbol.value,
     });
     faResult.value = data;
-  } catch (err: any) {
-    faError.value = err?.response?.data?.detail?.message || '财务分析失败';
+  } catch (err: unknown) {
+    faError.value = errorMessage(err, '财务分析失败');
   } finally {
     faLoading.value = false;
   }
@@ -70,7 +97,9 @@ async function analyzeFundamental(): Promise<void> {
     <div v-if="faResult" class="report-section">
       <h3>财务分析</h3>
       <p class="summary">{{ faResult.summary }}</p>
-      <pre>{{ JSON.stringify({ metrics: faResult.metrics, ratios: faResult.ratios }, null, 2) }}</pre>
+      <pre>{{
+        JSON.stringify({ metrics: faResult.metrics, ratios: faResult.ratios }, null, 2)
+      }}</pre>
     </div>
 
     <div class="report-form">
@@ -97,11 +126,7 @@ async function analyzeFundamental(): Promise<void> {
       <h2>报告：{{ report.symbol }}</h2>
       <p class="meta">as_of: {{ report.as_of }} · {{ report.module_version }}</p>
       <p class="summary">{{ report.summary }}</p>
-      <div
-        v-for="section in report.sections"
-        :key="section.title"
-        class="report-section"
-      >
+      <div v-for="section in report.sections" :key="section.title" class="report-section">
         <h3>{{ section.title }}</h3>
         <pre>{{ JSON.stringify(section.data, null, 2) }}</pre>
       </div>

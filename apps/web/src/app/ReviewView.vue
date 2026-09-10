@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { http } from '../api/client';
 
@@ -14,6 +14,15 @@ type ReviewItem = {
 const items = ref<ReviewItem[]>([]);
 const loading = ref(false);
 const error = ref('');
+let refreshTimer: number | undefined;
+
+function errorMessage(err: unknown, fallback: string): string {
+  if (typeof err !== 'object' || err === null) {
+    return fallback;
+  }
+  const response = (err as { response?: { data?: { detail?: { message?: string } } } }).response;
+  return response?.data?.detail?.message || fallback;
+}
 
 async function loadQueue(): Promise<void> {
   loading.value = true;
@@ -21,8 +30,8 @@ async function loadQueue(): Promise<void> {
   try {
     const { data } = await http.get('/reviews/queue');
     items.value = data;
-  } catch (err: any) {
-    error.value = err?.response?.data?.detail?.message || '加载审核队列失败';
+  } catch (err: unknown) {
+    error.value = errorMessage(err, '加载审核队列失败');
   } finally {
     loading.value = false;
   }
@@ -33,12 +42,23 @@ async function decide(id: string, decision: string): Promise<void> {
   try {
     await http.post(`/reviews/${id}/decision`, { decision });
     await loadQueue();
-  } catch (err: any) {
-    error.value = err?.response?.data?.detail?.message || '提交决策失败';
+  } catch (err: unknown) {
+    error.value = errorMessage(err, '提交决策失败');
   }
 }
 
-onMounted(loadQueue);
+onMounted(() => {
+  void loadQueue();
+  refreshTimer = window.setInterval(() => {
+    void loadQueue();
+  }, 5000);
+});
+
+onBeforeUnmount(() => {
+  if (refreshTimer !== undefined) {
+    window.clearInterval(refreshTimer);
+  }
+});
 </script>
 
 <template>

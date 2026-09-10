@@ -9,6 +9,7 @@ async def test_review_agent_approves_report() -> None:
         symbol="600519.SH",
         as_of=datetime(2026, 4, 1, tzinfo=timezone.utc),
         module_version="report:1.0.0",
+        summary="测试摘要",
         sections=[ReportSection("风险", {"risk_level": "LOW"})],
     )
 
@@ -22,6 +23,7 @@ async def test_review_agent_rejects_empty_report() -> None:
         symbol="600519.SH",
         as_of=datetime(2026, 4, 1, tzinfo=timezone.utc),
         module_version="report:1.0.0",
+        summary="测试摘要",
         sections=[],
     )
 

@@ -44,6 +44,15 @@ class WorkflowEventStore:
     async def get_task(self, task_id: uuid.UUID) -> Task | None:
         return await self.session.get(Task, task_id)
 
+    async def update_task_status(self, task_id: uuid.UUID, status: str) -> Task:
+        task = await self.get_task(task_id)
+        if task is None:
+            raise LookupError(f"task not found: {task_id}")
+        task.status = status
+        await self.session.flush()
+        await self.session.refresh(task)
+        return task
+
     async def find_task_by_idempotency_key(
         self, tenant_id: uuid.UUID, user_id: uuid.UUID, idempotency_key: str
     ) -> Task | None:

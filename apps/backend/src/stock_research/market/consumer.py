@@ -3,10 +3,23 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from stock_research.market.store import MarketBarStore, MarketMinuteStateStore, MarketSnapshotStore
+from stock_research.market.store import (
+    MarketBarStore,
+    MarketMinuteStateStore,
+    MarketNewsStore,
+    MarketSnapshotStore,
+)
 from stock_research.stores.models.workflow import InboxEvent
 
-CONSUMABLE_EVENT_TYPES = frozenset({"market.quote", "market.snapshot", "market.bar"})
+CONSUMABLE_EVENT_TYPES = frozenset(
+    {
+        "market.quote",
+        "market.snapshot",
+        "market.bar",
+        "market.news",
+        "market.announcement",
+    }
+)
 
 
 class MarketDataConsumer:
@@ -15,6 +28,7 @@ class MarketDataConsumer:
         self.store = MarketSnapshotStore(session)
         self.bar_store = MarketBarStore(session)
         self.minute_store = MarketMinuteStateStore(session)
+        self.news_store = MarketNewsStore(session)
 
     async def consume_pending(self, limit: int = 100) -> int:
         result = await self.session.execute(
@@ -37,6 +51,9 @@ class MarketDataConsumer:
         if event.event_type == "market.bar":
             await self._process_bar(event, payload)
             return
+        if event.event_type in {"market.news", "market.announcement"}:
+            await self._process_news(event, payload)
+            return
 
         symbol = str(payload.get("symbol") or "UNKNOWN")
         event_time = _event_time(payload, event.received_at)
@@ -50,6 +67,28 @@ class MarketDataConsumer:
             source_event_id=event.event_id,
             symbol=symbol,
             event_time=event_time,
+            payload=payload,
+        )
+        event.processed_at = datetime.now(timezone.utc)
+
+    async def _process_news(
+        self,
+        event: InboxEvent,
+        payload: dict[str, object],
+    ) -> None:
+        symbol = str(payload.get("symbol") or "UNKNOWN")
+        kind = "announcement" if event.event_type == "market.announcement" else "news"
+        event_time = _event_time(payload, event.received_at)
+        headline = _optional_string(payload.get("headline") or payload.get("title"))
+        url = _optional_string(payload.get("url"))
+
+        await self.news_store.upsert_from_inbox(
+            source_event_id=event.event_id,
+            symbol=symbol,
+            kind=kind,
+            event_time=event_time,
+            headline=headline,
+            url=url,
             payload=payload,
         )
         event.processed_at = datetime.now(timezone.utc)
@@ -102,6 +141,13 @@ def _required_float(payload: dict[str, object], key: str) -> float:
 
 def _optional_float(value: object) -> float | None:
     return _as_float(value)
+
+
+def _optional_string(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _as_float(value: object) -> float | None:

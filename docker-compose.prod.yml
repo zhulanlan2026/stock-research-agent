@@ -22,6 +22,15 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
       COLLECTOR_INGEST_TOKEN: ${COLLECTOR_INGEST_TOKEN:?COLLECTOR_INGEST_TOKEN is required}
       REFRESH_COOKIE_SECURE: "true"
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      TECHNICAL_CYCLE_HORIZON: ${TECHNICAL_CYCLE_HORIZON:-5}
+      TECHNICAL_LSTM_ENABLED: ${TECHNICAL_LSTM_ENABLED:-false}
+      TECHNICAL_LSTM_SEED: ${TECHNICAL_LSTM_SEED:-0}
+      TECHNICAL_LSTM_HIDDEN_SIZE: ${TECHNICAL_LSTM_HIDDEN_SIZE:-8}
+      TECHNICAL_LSTM_EPOCHS: ${TECHNICAL_LSTM_EPOCHS:-50}
+      TECHNICAL_LSTM_WINDOW: ${TECHNICAL_LSTM_WINDOW:-20}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=3)"]
       interval: 15s

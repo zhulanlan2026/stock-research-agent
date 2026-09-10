@@ -6,9 +6,10 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.market.analysis import MarketAnalysisService, MarketSnapshotSummary
+from stock_research.market.cycle import CycleAnalysisResult, CycleAnalysisService
 from stock_research.market.indicators import IndicatorPoint, IndicatorService
 
-TECHNICAL_ENGINE_VERSION = "technical:1.0.0"
+TECHNICAL_ENGINE_VERSION = "technical:1.1.0"
 MARKET_ENGINE_VERSION = "market:1.0.0"
 
 
@@ -20,6 +21,7 @@ class TechnicalEngineResult:
     module_version: str
     data_versions: dict[str, object]
     points: list[IndicatorPoint]
+    cycle_analysis: CycleAnalysisResult
 
 
 @dataclass(frozen=True)
@@ -36,8 +38,14 @@ class TechnicalEngine:
 
     module_version = TECHNICAL_ENGINE_VERSION
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        *,
+        cycle_service: CycleAnalysisService | None = None,
+    ) -> None:
         self._indicator_service = IndicatorService(session)
+        self._cycle_service = cycle_service or CycleAnalysisService()
 
     async def calculate(
         self,
@@ -48,6 +56,7 @@ class TechnicalEngine:
         macd_fast: int = 12,
         macd_slow: int = 26,
         macd_signal: int = 9,
+        cycle_horizon: int = 5,
     ) -> TechnicalEngineResult:
         points = await self._indicator_service.indicators(
             symbol,
@@ -58,6 +67,10 @@ class TechnicalEngine:
             macd_slow=macd_slow,
             macd_signal=macd_signal,
         )
+        cycle_analysis = self._cycle_service.analyze(
+            [point.close for point in points],
+            horizon=cycle_horizon,
+        )
         as_of = points[-1].time if points else datetime.now(timezone.utc)
         return TechnicalEngineResult(
             symbol=symbol,
@@ -66,6 +79,7 @@ class TechnicalEngine:
             module_version=self.module_version,
             data_versions={"source": "postgresql", "as_of": as_of.isoformat()},
             points=points,
+            cycle_analysis=cycle_analysis,
         )
 
 

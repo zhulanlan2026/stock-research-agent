@@ -5,7 +5,12 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from stock_research.stores.models.market import MarketBar, MarketMinuteState, MarketSnapshot
+from stock_research.stores.models.market import (
+    MarketBar,
+    MarketMinuteState,
+    MarketNews,
+    MarketSnapshot,
+)
 
 
 class MarketSnapshotStore:
@@ -134,4 +139,55 @@ class MarketMinuteStateStore:
             .order_by(MarketMinuteState.as_of_minute.desc())
             .limit(limit)
         )
+        return list(result.scalars().all())
+
+
+class MarketNewsStore:
+    """新闻/公告事实的确定性落库与读取。"""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def upsert_from_inbox(
+        self,
+        *,
+        source_event_id: str,
+        symbol: str,
+        kind: str,
+        event_time: datetime,
+        headline: str | None,
+        url: str | None,
+        payload: dict[str, object],
+    ) -> None:
+        statement = (
+            pg_insert(MarketNews)
+            .values(
+                id=uuid.uuid4(),
+                symbol=symbol,
+                kind=kind,
+                event_time=event_time,
+                source_event_id=source_event_id,
+                headline=headline,
+                url=url,
+                payload=payload,
+            )
+            .on_conflict_do_nothing(index_elements=["source_event_id"])
+        )
+        await self.session.execute(statement)
+
+    async def latest(
+        self,
+        symbol: str,
+        *,
+        as_of: datetime | None = None,
+        limit: int = 20,
+    ) -> list[MarketNews]:
+        statement = select(MarketNews).where(MarketNews.symbol == symbol)
+        if as_of is not None:
+            statement = statement.where(MarketNews.event_time <= as_of)
+        statement = statement.order_by(
+            MarketNews.event_time.desc(),
+            MarketNews.created_at.desc(),
+        ).limit(limit)
+        result = await self.session.execute(statement)
         return list(result.scalars().all())

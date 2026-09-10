@@ -29,6 +29,10 @@ const router = createRouter({
           path: 'review',
           component: () => import('../app/ReviewView.vue'),
         },
+        {
+          path: 'tasks',
+          component: () => import('../app/ResearchTasksView.vue'),
+        },
       ],
     },
   ],

@@ -46,3 +46,26 @@ class MarketIndicatorResponse(BaseModel):
     macd_dea: float | None
     macd_hist: float | None
     rsi: float | None
+
+
+class MarketCyclePeriodResponse(BaseModel):
+    period_bars: float
+    power: float
+
+
+class MarketWaveletEnergyResponse(BaseModel):
+    level: int
+    energy: float
+
+
+class MarketCycleResponse(BaseModel):
+    symbol: str
+    period: str
+    module_version: str
+    sample_count: int
+    fft_periods: list[MarketCyclePeriodResponse]
+    wavelet_energy: list[MarketWaveletEnergyResponse]
+    lstm_available: bool
+    lstm_reason: str | None
+    lstm_predictions: list[float]
+    lstm_latency_ms: int | None

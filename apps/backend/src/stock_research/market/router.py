@@ -5,13 +5,17 @@ from stock_research.iam.dependencies import require_permission
 from stock_research.market.analysis import MarketAnalysisService
 from stock_research.market.bar_service import MarketBarService
 from stock_research.market.cache import MarketSnapshotCache
+from stock_research.market.cycle import CycleAnalysisService
 from stock_research.market.dependencies import get_market_snapshot_cache
 from stock_research.market.indicators import IndicatorService
 from stock_research.market.schemas import (
     MarketBarResponse,
+    MarketCyclePeriodResponse,
+    MarketCycleResponse,
     MarketIndicatorResponse,
     MarketSnapshotResponse,
     MarketSnapshotSummaryResponse,
+    MarketWaveletEnergyResponse,
 )
 from stock_research.market.store import MarketSnapshotStore
 from stock_research.stores.models.iam import User
@@ -120,3 +124,43 @@ async def list_market_indicators(
         )
         for point in points
     ]
+
+
+@router.get(
+    "/bars/{symbol}/cycle",
+    response_model=MarketCycleResponse,
+)
+async def market_cycle_analysis(
+    symbol: str = Path(min_length=1, max_length=32),
+    period: str = Query(default="1m", pattern="^(1m|5m|15m|30m|1h|1d)$"),
+    limit: int = Query(default=100, ge=8, le=500),
+    _: User = Depends(_require_market_read),
+    session: AsyncSession = Depends(get_session),
+) -> MarketCycleResponse:
+    bars = await MarketBarService(session).bars(symbol, period, limit)
+    closes = [bar.close for bar in bars]
+    result = CycleAnalysisService().analyze(closes)
+    return MarketCycleResponse(
+        symbol=symbol,
+        period=period,
+        module_version=result.module_version,
+        sample_count=result.sample_count,
+        fft_periods=[
+            MarketCyclePeriodResponse(
+                period_bars=item["period_bars"],
+                power=item["power"],
+            )
+            for item in result.fft_periods
+        ],
+        wavelet_energy=[
+            MarketWaveletEnergyResponse(
+                level=item["level"],
+                energy=item["energy"],
+            )
+            for item in result.wavelet_energy
+        ],
+        lstm_available=result.lstm_available,
+        lstm_reason=result.lstm_reason,
+        lstm_predictions=list(result.lstm_predictions),
+        lstm_latency_ms=result.lstm_latency_ms,
+    )

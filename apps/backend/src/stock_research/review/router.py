@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.auth.dependencies import get_current_user
 from stock_research.review.human_review import HumanReviewService
+from stock_research.review.research_sync import apply_research_review_decision
 from stock_research.review.schemas import ReviewDecisionRequest, ReviewResponse
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
@@ -43,5 +44,6 @@ async def decide_review(
         comment=body.comment,
         reason_code=body.reason_code,
     )
+    await apply_research_review_decision(session, review, body.decision)
     await session.commit()
     return ReviewResponse.model_validate(review)

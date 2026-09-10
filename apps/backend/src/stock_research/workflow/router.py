@@ -1,8 +1,9 @@
+import asyncio
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +12,7 @@ from stock_research.fundamental.report import ReportService
 from stock_research.fundamental.research import DEFAULT_SCENARIOS, StandardResearchService
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
+from stock_research.workflow.runner import run_research_task
 from stock_research.workflow.schemas import (
     ReportRequest,
     ReportResponse,
@@ -28,6 +30,7 @@ router = APIRouter(prefix="/research", tags=["workflow"])
 async def create_task(
     body: TaskCreateRequest,
     request: Request,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> TaskResponse:
@@ -51,6 +54,7 @@ async def create_task(
         idempotency_key=idempotency_key,
     )
     await session.commit()
+    background_tasks.add_task(run_research_task, task.id)
     return TaskResponse.model_validate(task)
 
 
@@ -111,11 +115,21 @@ async def task_events(
         )
 
     after_sequence = parse_last_event_id(request.headers.get("Last-Event-ID"))
-    events = await store.list_events(task_id, after_sequence)
-
     async def event_stream() -> AsyncGenerator[str, None]:
-        for event in events:
-            yield format_sse(event)
+        current_after = after_sequence
+        terminal_statuses = {"completed", "failed", "rejected", "review_required"}
+        while True:
+            events = await store.list_events(task_id, current_after)
+            for event in events:
+                yield format_sse(event)
+                current_after = event.sequence_no
+
+            await session.refresh(task)
+            if task.status in terminal_statuses:
+                break
+            if await request.is_disconnected():
+                break
+            await asyncio.sleep(1)
 
     return StreamingResponse(
         event_stream(),

@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metrics */
+        get: operations["metrics_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -123,6 +140,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload File */
+        post: operations["upload_file_api_v1_files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/citations/documents/{document_id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Document Evidence */
+        get: operations["list_document_evidence_api_v1_citations_documents__document_id__evidence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/citations/evidence/{evidence_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Evidence */
+        get: operations["get_evidence_api_v1_citations_evidence__evidence_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fundamental/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Analyze Fundamental */
+        post: operations["analyze_fundamental_api_v1_fundamental_analysis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/permissions": {
         parameters: {
             query?: never;
@@ -225,6 +310,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market/bars/{symbol}/cycle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Market Cycle Analysis */
+        get: operations["market_cycle_analysis_api_v1_market_bars__symbol__cycle_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user-settings/{key}": {
         parameters: {
             query?: never;
@@ -254,6 +356,23 @@ export interface paths {
         put?: never;
         /** Create Task */
         post: operations["create_task_api_v1_research_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Report */
+        post: operations["generate_report_api_v1_research_reports_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -294,10 +413,186 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/supply-chain/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Graph */
+        get: operations["get_graph_api_v1_supply_chain_graph_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Review Queue */
+        get: operations["list_review_queue_api_v1_reviews_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/{review_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Review */
+        post: operations["decide_review_api_v1_reviews__review_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Body_upload_file_api_v1_files_post */
+        Body_upload_file_api_v1_files_post: {
+            /** File */
+            file: string;
+            /** Symbol */
+            symbol?: string | null;
+            /**
+             * Document Type
+             * @default unknown
+             */
+            document_type: string;
+        };
+        /** DocumentUploadResponse */
+        DocumentUploadResponse: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Version No */
+            version_no: number;
+            /** Document Type */
+            document_type: string | null;
+            /** Content Hash */
+            content_hash: string;
+            /** Raw Object Key */
+            raw_object_key: string;
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** EvidenceResponse */
+        EvidenceResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Document Id */
+            document_id: string | null;
+            /** Document Version Id */
+            document_version_id: string | null;
+            /** Root Evidence Id */
+            root_evidence_id: string | null;
+            /** Page */
+            page: number | null;
+            /** Section */
+            section: string | null;
+            /** Content Hash */
+            content_hash: string;
+            /** Content */
+            content: string;
+            /** Source Level */
+            source_level: string | null;
+            /** Citation Ready */
+            citation_ready: boolean;
+            /** Authorization */
+            authorization: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** FundamentalAnalysisRequest */
+        FundamentalAnalysisRequest: {
+            /** Symbol */
+            symbol: string;
+            /** As Of */
+            as_of?: string | null;
+        };
+        /** FundamentalAnalysisResponse */
+        FundamentalAnalysisResponse: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Coverage */
+            coverage: number;
+            /** Summary */
+            summary: string;
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /** Ratios */
+            ratios: {
+                [key: string]: unknown;
+            };
+        };
+        /** GraphEdgeResponse */
+        GraphEdgeResponse: {
+            /** Source */
+            source: string;
+            /** Predicate */
+            predicate: string;
+            /** Target */
+            target: string;
+        };
+        /** GraphResponse */
+        GraphResponse: {
+            /** Nodes */
+            nodes: string[];
+            /** Edges */
+            edges: components["schemas"]["GraphEdgeResponse"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -365,6 +660,36 @@ export interface components {
             close: number;
             /** Volume */
             volume: number | null;
+        };
+        /** MarketCyclePeriodResponse */
+        MarketCyclePeriodResponse: {
+            /** Period Bars */
+            period_bars: number;
+            /** Power */
+            power: number;
+        };
+        /** MarketCycleResponse */
+        MarketCycleResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Period */
+            period: string;
+            /** Module Version */
+            module_version: string;
+            /** Sample Count */
+            sample_count: number;
+            /** Fft Periods */
+            fft_periods: components["schemas"]["MarketCyclePeriodResponse"][];
+            /** Wavelet Energy */
+            wavelet_energy: components["schemas"]["MarketWaveletEnergyResponse"][];
+            /** Lstm Available */
+            lstm_available: boolean;
+            /** Lstm Reason */
+            lstm_reason: string | null;
+            /** Lstm Predictions */
+            lstm_predictions: number[];
+            /** Lstm Latency Ms */
+            lstm_latency_ms: number | null;
         };
         /** MarketIndicatorResponse */
         MarketIndicatorResponse: {
@@ -435,6 +760,80 @@ export interface components {
             event_time: string | null;
             /** Sample Count */
             sample_count: number;
+        };
+        /** MarketWaveletEnergyResponse */
+        MarketWaveletEnergyResponse: {
+            /** Level */
+            level: number;
+            /** Energy */
+            energy: number;
+        };
+        /** ReportRequest */
+        ReportRequest: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * Mode
+             * @default standard
+             */
+            mode: string;
+            /** As Of */
+            as_of?: string | null;
+        };
+        /** ReportResponse */
+        ReportResponse: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Module Version */
+            module_version: string;
+            /** Summary */
+            summary: string;
+            /** Sections */
+            sections: components["schemas"]["ReportSectionResponse"][];
+        };
+        /** ReportSectionResponse */
+        ReportSectionResponse: {
+            /** Title */
+            title: string;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+        };
+        /** ReviewDecisionRequest */
+        ReviewDecisionRequest: {
+            /** Decision */
+            decision: string;
+            /** Comment */
+            comment?: string | null;
+            /** Reason Code */
+            reason_code?: string | null;
+        };
+        /** ReviewResponse */
+        ReviewResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Target Type */
+            target_type: string;
+            /** Target Id */
+            target_id: string;
+            /** Status */
+            status: string;
+            /** Decision */
+            decision: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** TaskCreateRequest */
         TaskCreateRequest: {
@@ -551,6 +950,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    metrics_metrics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+        };
+    };
     live_health_live_get: {
         parameters: {
             query?: never;
@@ -704,6 +1123,134 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserMe"];
+                };
+            };
+        };
+    };
+    upload_file_api_v1_files_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_file_api_v1_files_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_document_evidence_api_v1_citations_documents__document_id__evidence_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_api_v1_citations_evidence__evidence_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidence_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_fundamental_api_v1_fundamental_analysis_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FundamentalAnalysisRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundamentalAnalysisResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -901,6 +1448,40 @@ export interface operations {
             };
         };
     };
+    market_cycle_analysis_api_v1_market_bars__symbol__cycle_get: {
+        parameters: {
+            query?: {
+                period?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketCycleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_user_setting_api_v1_user_settings__key__get: {
         parameters: {
             query?: never;
@@ -1000,6 +1581,39 @@ export interface operations {
             };
         };
     };
+    generate_report_api_v1_research_reports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_task_api_v1_research_tasks__task_id__get: {
         parameters: {
             query?: never;
@@ -1049,6 +1663,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_graph_api_v1_supply_chain_graph_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphResponse"];
+                };
+            };
+        };
+    };
+    list_review_queue_api_v1_reviews_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewResponse"][];
+                };
+            };
+        };
+    };
+    decide_review_api_v1_reviews__review_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewResponse"];
                 };
             };
             /** @description Validation Error */

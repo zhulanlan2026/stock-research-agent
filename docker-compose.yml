@@ -27,6 +27,8 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+      args:
+        INSTALL_TORCH: ${INSTALL_TORCH:-false}
     container_name: research-backend
     ports:
       - "8000:8000"
@@ -52,6 +54,37 @@ services:
       - "8080:80"
     depends_on:
       - backend
+    networks:
+      - research-net
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: research-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus:/etc/prometheus:ro
+      - ./volumes/prometheus:/prometheus
+    depends_on:
+      - backend
+    networks:
+      - research-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: research-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./volumes/grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
     networks:
       - research-net
     restart: unless-stopped

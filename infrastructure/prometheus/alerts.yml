@@ -15,3 +15,10 @@ groups:
           severity: warning
         annotations:
           summary: "Inbox pending events are high"
+      - alert: HighLstmLatency
+        expr: technical_lstm_latency_ms_last > 5000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LSTM cycle prediction latency is high"

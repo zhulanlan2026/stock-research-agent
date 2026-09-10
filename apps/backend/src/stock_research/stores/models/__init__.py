@@ -32,7 +32,12 @@ from stock_research.stores.models.iam import (
     User,
     UserRole,
 )
-from stock_research.stores.models.market import MarketBar, MarketMinuteState, MarketSnapshot
+from stock_research.stores.models.market import (
+    MarketBar,
+    MarketMinuteState,
+    MarketNews,
+    MarketSnapshot,
+)
 from stock_research.stores.models.review import HumanReview, HumanReviewEvent
 from stock_research.stores.models.supply_chain import (
     Contract,
@@ -75,6 +80,7 @@ __all__ = [
     "MfaFactor",
     "MarketBar",
     "MarketMinuteState",
+    "MarketNews",
     "MarketSnapshot",
     "ModelUsage",
     "NormalizedBlock",

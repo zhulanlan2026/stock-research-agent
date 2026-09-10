@@ -10,20 +10,39 @@ const error = ref('');
 
 let chart: echarts.ECharts | null = null;
 
+type GraphEdge = {
+  source: string;
+  target: string;
+  predicate: string;
+};
+
+type GraphResponse = {
+  nodes: string[];
+  edges: GraphEdge[];
+};
+
+function errorMessage(err: unknown, fallback: string): string {
+  if (typeof err !== 'object' || err === null) {
+    return fallback;
+  }
+  const response = (err as { response?: { data?: { detail?: { message?: string } } } }).response;
+  return response?.data?.detail?.message || fallback;
+}
+
 async function loadGraph(): Promise<void> {
   loading.value = true;
   error.value = '';
   try {
-    const { data } = await http.get('/supply-chain/graph');
+    const { data } = await http.get<GraphResponse>('/supply-chain/graph');
     renderGraph(data.nodes, data.edges);
-  } catch (err: any) {
-    error.value = err?.response?.data?.detail?.message || '加载供应链图失败';
+  } catch (err: unknown) {
+    error.value = errorMessage(err, '加载供应链图失败');
   } finally {
     loading.value = false;
   }
 }
 
-function renderGraph(nodes: string[], edges: any[]): void {
+function renderGraph(nodes: string[], edges: GraphEdge[]): void {
   if (!chartRef.value) {
     return;
   }

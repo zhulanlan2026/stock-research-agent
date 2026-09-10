@@ -12,6 +12,7 @@ from stock_research.market.store import MarketBarStore
 @dataclass(frozen=True)
 class IndicatorPoint:
     time: datetime
+    close: float | None
     ma5: float | None
     ma10: float | None
     ma20: float | None
@@ -63,6 +64,7 @@ class IndicatorService:
         return [
             IndicatorPoint(
                 time=bar.bar_time,
+                close=bar.close,
                 ma5=_round(ma5[index]),
                 ma10=_round(ma10[index]),
                 ma20=_round(ma20[index]),

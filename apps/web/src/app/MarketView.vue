@@ -9,6 +9,7 @@ type MarketSnapshotSummary = components['schemas']['MarketSnapshotSummaryRespons
 type MarketSnapshot = components['schemas']['MarketSnapshotResponse'];
 type MarketBar = components['schemas']['MarketBarResponse'];
 type MarketIndicator = components['schemas']['MarketIndicatorResponse'];
+type MarketCycle = components['schemas']['MarketCycleResponse'];
 type IndicatorProfile = { name: string; config: IndicatorConfig };
 type ChartTheme = 'light' | 'dark' | 'cool' | 'warm' | 'contrast' | 'custom';
 type ProfileBackup = {
@@ -34,6 +35,7 @@ const summaries = ref<Record<string, MarketSnapshotSummary>>({});
 const snapshots = ref<MarketSnapshot[]>([]);
 const bars = ref<MarketBar[]>([]);
 const indicators = ref<MarketIndicator[]>([]);
+const cycle = ref<MarketCycle | null>(null);
 const period = ref('1d');
 const rsiPeriod = ref(14);
 const macdFast = ref(12);
@@ -90,8 +92,10 @@ const error = ref('');
 const loading = ref(false);
 const status = ref<'loading' | 'ok' | 'error'>('loading');
 const chartRef = ref<HTMLDivElement | null>(null);
+const cycleChartRef = ref<HTMLDivElement | null>(null);
 
 let chart: ReturnType<typeof echarts.init> | null = null;
+let cycleChart: ReturnType<typeof echarts.init> | null = null;
 let refreshTimer: number | undefined;
 
 const STORAGE_KEY = 'stock-research.indicator-config.v1';
@@ -157,6 +161,7 @@ function removeSymbol(symbol: string): void {
   } else {
     snapshots.value = [];
     bars.value = [];
+    cycle.value = null;
     renderChart();
   }
 }
@@ -221,14 +226,32 @@ async function loadIndicators(): Promise<void> {
   indicators.value = data;
 }
 
+async function loadCycle(): Promise<void> {
+  if (!selectedSymbol.value) {
+    cycle.value = null;
+    return;
+  }
+  const { data } = await http.get<MarketCycle>(
+    `/market/bars/${encodeURIComponent(selectedSymbol.value)}/cycle?period=${encodeURIComponent(period.value)}&limit=100`,
+  );
+  cycle.value = data;
+}
+
 async function refreshAll(): Promise<void> {
   loading.value = true;
   status.value = 'loading';
   error.value = '';
   try {
-    await Promise.all([loadSummaries(), loadSnapshots(), loadBars(), loadIndicators()]);
+    await Promise.all([
+      loadSummaries(),
+      loadSnapshots(),
+      loadBars(),
+      loadIndicators(),
+      loadCycle(),
+    ]);
     await nextTick();
     renderChart();
+    renderCycleChart();
     status.value = 'ok';
   } catch {
     error.value = '行情加载失败，请确认标的代码或稍后重试';
@@ -979,6 +1002,83 @@ function renderChart(): void {
   applyGroupVisibility();
 }
 
+function renderCycleChart(): void {
+  if (!cycleChartRef.value) {
+    return;
+  }
+  if (!cycleChart) {
+    cycleChart = echarts.init(cycleChartRef.value);
+  }
+
+  const analysis = cycle.value;
+  const fftLabels =
+    analysis?.fft_periods.map((item) => `${item.period_bars}K`) ?? [];
+  const fftPowers = analysis?.fft_periods.map((item) => item.power) ?? [];
+  const waveletLabels =
+    analysis?.wavelet_energy.map((item) => `L${item.level}`) ?? [];
+  const waveletEnergy =
+    analysis?.wavelet_energy.map((item) => item.energy) ?? [];
+  const predictionLabels =
+    analysis?.lstm_predictions.map((_value, index) => `T+${index + 1}`) ?? [];
+  const predictionValues = analysis?.lstm_predictions ?? [];
+
+  cycleChart.setOption({
+    title: {
+      text: `${selectedSymbol.value || '标的'} 周期分析`,
+      left: 'center',
+    },
+    backgroundColor: currentThemeColors().background,
+    textStyle: { color: currentThemeColors().text },
+    tooltip: { trigger: 'axis' },
+    legend: {
+      data: ['FFT 能量', '小波能量', 'LSTM 预测'],
+      top: 28,
+    },
+    grid: [
+      { left: '8%', right: '3%', top: 70, height: 90 },
+      { left: '8%', right: '3%', top: 205, height: 90 },
+      { left: '8%', right: '3%', top: 340, height: 90 },
+    ],
+    xAxis: [
+      { type: 'category', data: fftLabels, boundaryGap: true },
+      { type: 'category', gridIndex: 1, data: waveletLabels, boundaryGap: true },
+      {
+        type: 'category',
+        gridIndex: 2,
+        data: predictionLabels,
+        boundaryGap: true,
+      },
+    ],
+    yAxis: [
+      { type: 'value', scale: true },
+      { type: 'value', gridIndex: 1, scale: true },
+      { type: 'value', gridIndex: 2, scale: true },
+    ],
+    series: [
+      {
+        name: 'FFT 能量',
+        type: 'bar',
+        data: fftPowers,
+      },
+      {
+        name: '小波能量',
+        type: 'bar',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: waveletEnergy,
+      },
+      {
+        name: 'LSTM 预测',
+        type: 'line',
+        xAxisIndex: 2,
+        yAxisIndex: 2,
+        data: predictionValues,
+        showSymbol: true,
+      },
+    ],
+  });
+}
+
 onMounted(() => {
   loadProfiles();
   loadCleanupSettings();
@@ -1002,6 +1102,8 @@ onBeforeUnmount(() => {
   }
   chart?.dispose();
   chart = null;
+  cycleChart?.dispose();
+  cycleChart = null;
 });
 </script>
 
@@ -1254,6 +1356,46 @@ onBeforeUnmount(() => {
       </ul>
     </div>
     <div ref="chartRef" class="chart" />
+
+    <div ref="cycleChartRef" class="cycle-chart" />
+
+    <div v-if="cycle" class="cycle-panel">
+      <h2>周期分析</h2>
+      <div class="cycle-meta">
+        <span>样本数：{{ cycle.sample_count }}</span>
+        <span>模块版本：{{ cycle.module_version }}</span>
+        <span>LSTM：{{ cycle.lstm_available ? '已启用' : '未启用' }}</span>
+      </div>
+      <div class="cycle-sections">
+        <div>
+          <h3>FFT 主导周期</h3>
+          <ul v-if="cycle.fft_periods.length">
+            <li v-for="item in cycle.fft_periods" :key="item.period_bars">
+              {{ item.period_bars }} 根 K 线，能量 {{ item.power.toFixed(6) }}
+            </li>
+          </ul>
+          <p v-else>暂无有效周期。</p>
+        </div>
+        <div>
+          <h3>小波能量</h3>
+          <ul v-if="cycle.wavelet_energy.length">
+            <li v-for="item in cycle.wavelet_energy" :key="item.level">
+              Level {{ item.level }}：{{ (item.energy * 100).toFixed(2) }}%
+            </li>
+          </ul>
+          <p v-else>暂无小波分解结果。</p>
+        </div>
+        <div>
+          <h3>LSTM 预测</h3>
+          <ul v-if="cycle.lstm_available && cycle.lstm_predictions.length">
+            <li v-for="(value, index) in cycle.lstm_predictions" :key="index">
+              T+{{ index + 1 }}：{{ value }}
+            </li>
+          </ul>
+          <p v-else>{{ cycle.lstm_reason || '暂无 LSTM 预测。' }}</p>
+        </div>
+      </div>
+    </div>
 
     <h2>最近快照</h2>
     <table class="snapshot-table">
@@ -1594,6 +1736,45 @@ onBeforeUnmount(() => {
   background: #dbeafe;
   color: #1d4ed8;
   font-size: 0.75rem;
+}
+
+.cycle-panel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.cycle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.cycle-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.cycle-sections h3 {
+  margin: 0 0 0.4rem;
+}
+
+.cycle-sections ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.cycle-chart {
+  height: 30rem;
 }
 
 .chart {

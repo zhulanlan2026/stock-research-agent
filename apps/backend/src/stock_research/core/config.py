@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-m3"
     embedding_dim: int = 1024
 
+    llm_base_url: str = "https://api.deepseek.com"
+    llm_api_key: str = ""
+    llm_model: str = "deepseek-chat"
+
     milvus_uri: str = "http://localhost:19530"
 
     neo4j_uri: str = "bolt://localhost:7687"
@@ -43,6 +47,13 @@ class Settings(BaseSettings):
     refresh_cookie_name: str = "refresh_token"
     refresh_cookie_secure: bool = False
     market_consume_interval_seconds: float = 1.0
+    outbox_dispatch_interval_seconds: float = 1.0
+    technical_cycle_horizon: int = 5
+    technical_lstm_enabled: bool = False
+    technical_lstm_seed: int = 0
+    technical_lstm_hidden_size: int = 8
+    technical_lstm_epochs: int = 50
+    technical_lstm_window: int = 20
 
     @property
     def is_development(self) -> bool:

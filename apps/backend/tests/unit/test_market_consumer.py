@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy import select
 
 from stock_research.market.consumer import MarketDataConsumer
-from stock_research.market.store import MarketBarStore, MarketSnapshotStore
+from stock_research.market.store import MarketBarStore, MarketNewsStore, MarketSnapshotStore
 from stock_research.stores.models.market import MarketMinuteState
 from stock_research.stores.models.workflow import InboxEvent
 
@@ -117,3 +117,30 @@ async def test_consume_pending_ignores_duplicate_bar_time(db_context: Any) -> No
         bars = await MarketBarStore(session).latest("600519.SH", "1d")
         assert len(bars) == 1
         assert bars[0].open in (10.0, 11.0)
+
+
+async def test_consume_pending_persists_market_news(db_context: Any) -> None:
+    async with db_context.factory() as session:
+        session.add(
+            InboxEvent(
+                event_id="news-1",
+                event_type="market.announcement",
+                payload={
+                    "symbol": "600519.SH",
+                    "time": 1703228400000,
+                    "headline": "重大合同公告",
+                    "url": "https://example.com/a",
+                },
+                received_at=datetime.now(timezone.utc),
+            )
+        )
+        await session.commit()
+
+        consumed = await MarketDataConsumer(session).consume_pending()
+        assert consumed == 1
+
+        rows = await MarketNewsStore(session).latest("600519.SH")
+        assert len(rows) == 1
+        assert rows[0].kind == "announcement"
+        assert rows[0].headline == "重大合同公告"
+        assert rows[0].url == "https://example.com/a"

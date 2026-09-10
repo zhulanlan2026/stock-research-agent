@@ -50,3 +50,20 @@ class MarketMinuteState(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     source_event_id: Mapped[str] = mapped_column(String(200), nullable=False)
     payload: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict, nullable=False)
+
+
+class MarketNews(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "market_news"
+    __table_args__ = (
+        UniqueConstraint("source_event_id", name="uq_market_news_source_event_id"),
+    )
+
+    symbol: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    event_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True, nullable=False
+    )
+    source_event_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    headline: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    payload: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict, nullable=False)
