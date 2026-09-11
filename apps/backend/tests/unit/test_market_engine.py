@@ -48,7 +48,7 @@ async def test_technical_engine_is_deterministic(db_context: Any) -> None:
         first = await TechnicalEngine(session).calculate("600519.SH", "1d", limit=10)
         second = await TechnicalEngine(session).calculate("600519.SH", "1d", limit=10)
 
-        assert first.module_version == "technical:1.0.0"
+        assert first.module_version == "technical:1.1.0"
         assert first.points == second.points
 
 

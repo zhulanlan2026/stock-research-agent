@@ -56,14 +56,15 @@ async def test_report_service_renders_all_sections(db_context: Any) -> None:
         assert report.module_version == "report:1.0.0"
         assert [section.title for section in report.sections] == [
             "概览",
+            "财务",
             "估值",
             "情景",
             "风险",
             "同业",
         ]
-        valuation = report.sections[1].data
+        valuation = report.sections[2].data
         assert valuation["eps"] == "2"
         assert valuation["pe"] == "15"
-        scenarios = report.sections[2].data["scenarios"]
+        scenarios = report.sections[3].data["scenarios"]
         assert len(scenarios) == 3
         assert scenarios[0]["name"] == "BULL"
