@@ -42,6 +42,9 @@ services:
       MINIO_SECRET_KEY: minioadmin123
       MINIO_SECURE: "false"
       TECHNICAL_LSTM_ENABLED: "true"
+      TECHNICAL_LSTM_HIDDEN_SIZE: "12"
+      TECHNICAL_LSTM_EPOCHS: "30"
+      TECHNICAL_LSTM_WINDOW: "12"
     env_file:
       - .env
     depends_on:
