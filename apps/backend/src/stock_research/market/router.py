@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from stock_research.core.config import get_settings
 from stock_research.iam.dependencies import require_permission
 from stock_research.market.analysis import MarketAnalysisService
 from stock_research.market.bar_service import MarketBarService
@@ -8,6 +9,7 @@ from stock_research.market.cache import MarketSnapshotCache
 from stock_research.market.cycle import CycleAnalysisService
 from stock_research.market.dependencies import get_market_snapshot_cache
 from stock_research.market.indicators import IndicatorService
+from stock_research.market.torch_lstm import TorchLstmCyclePredictor
 from stock_research.market.schemas import (
     MarketBarResponse,
     MarketCyclePeriodResponse,
@@ -139,7 +141,18 @@ async def market_cycle_analysis(
 ) -> MarketCycleResponse:
     bars = await MarketBarService(session).bars(symbol, period, limit)
     closes = [bar.close for bar in bars]
-    result = CycleAnalysisService().analyze(closes)
+    settings = get_settings()
+    cycle_service = CycleAnalysisService()
+    if settings.technical_lstm_enabled:
+        cycle_service = CycleAnalysisService(
+            lstm_predictor=TorchLstmCyclePredictor(
+                seed=settings.technical_lstm_seed,
+                hidden_size=settings.technical_lstm_hidden_size,
+                epochs=settings.technical_lstm_epochs,
+                window=settings.technical_lstm_window,
+            )
+        )
+    result = cycle_service.analyze(closes)
     return MarketCycleResponse(
         symbol=symbol,
         period=period,
