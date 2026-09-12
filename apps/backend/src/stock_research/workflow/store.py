@@ -98,6 +98,14 @@ class WorkflowEventStore:
         )
         return list(result.scalars().all())
 
+    async def list_task_versions(self, task_id: uuid.UUID) -> list[TaskVersion]:
+        result = await self.session.execute(
+            select(TaskVersion)
+            .where(TaskVersion.task_id == task_id)
+            .order_by(TaskVersion.version_no)
+        )
+        return list(result.scalars().all())
+
     async def create_task_version(
         self, task_id: uuid.UUID, payload: dict[str, object], version_no: int | None = None
     ) -> TaskVersion:

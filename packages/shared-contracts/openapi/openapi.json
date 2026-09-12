@@ -1143,6 +1143,58 @@
         }
       }
     },
+    "/api/v1/research/tasks/{task_id}/versions": {
+      "get": {
+        "tags": [
+          "workflow"
+        ],
+        "summary": "Task Versions",
+        "operationId": "task_versions_api_v1_research_tasks__task_id__versions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskVersionResponse"
+                  },
+                  "title": "Response Task Versions Api V1 Research Tasks  Task Id  Versions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/research/tasks/{task_id}/events": {
       "get": {
         "tags": [
@@ -2523,6 +2575,37 @@
           "updated_at"
         ],
         "title": "TaskResponse"
+      },
+      "TaskVersionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "version_no": {
+            "type": "integer",
+            "title": "Version No"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "task_id",
+          "version_no",
+          "payload"
+        ],
+        "title": "TaskVersionResponse"
       },
       "UserMe": {
         "properties": {

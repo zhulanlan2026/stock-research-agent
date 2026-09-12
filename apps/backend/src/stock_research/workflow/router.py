@@ -19,6 +19,7 @@ from stock_research.workflow.schemas import (
     ReportSectionResponse,
     TaskCreateRequest,
     TaskResponse,
+    TaskVersionResponse,
 )
 from stock_research.workflow.sse import format_sse, parse_last_event_id
 from stock_research.workflow.store import WorkflowEventStore
@@ -97,6 +98,23 @@ async def get_task(
             detail={"code": "TASK_NOT_FOUND", "message": "任务不存在"},
         )
     return TaskResponse.model_validate(task)
+
+
+@router.get("/tasks/{task_id}/versions", response_model=list[TaskVersionResponse])
+async def task_versions(
+    task_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> list[TaskVersionResponse]:
+    store = WorkflowEventStore(session)
+    task = await store.get_task(task_id)
+    if task is None or task.tenant_id != current_user.tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "TASK_NOT_FOUND", "message": "任务不存在"},
+        )
+    versions = await store.list_task_versions(task_id)
+    return [TaskVersionResponse.model_validate(version) for version in versions]
 
 
 @router.get("/tasks/{task_id}/events")

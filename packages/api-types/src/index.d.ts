@@ -396,6 +396,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/research/tasks/{task_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Task Versions */
+        get: operations["task_versions_api_v1_research_tasks__task_id__versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/research/tasks/{task_id}/events": {
         parameters: {
             query?: never;
@@ -889,6 +906,25 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** TaskVersionResponse */
+        TaskVersionResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Version No */
+            version_no: number;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
         };
         /** UserMe */
         UserMe: {
@@ -1632,6 +1668,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaskResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    task_versions_api_v1_research_tasks__task_id__versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskVersionResponse"][];
                 };
             };
             /** @description Validation Error */

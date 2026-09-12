@@ -29,6 +29,15 @@ class TaskResponse(BaseModel):
     updated_at: datetime
 
 
+class TaskVersionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    task_id: uuid.UUID
+    version_no: int
+    payload: dict[str, object]
+
+
 class ReportRequest(BaseModel):
     symbol: str = Field(min_length=1, max_length=32)
     mode: str = Field(pattern="^(quick|standard|deep)$", default="standard")

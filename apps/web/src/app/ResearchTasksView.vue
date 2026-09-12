@@ -22,6 +22,13 @@ type TaskEvent = {
   created_at: string | null;
 };
 
+type TaskVersion = {
+  id: string;
+  task_id: string;
+  version_no: number;
+  payload: Record<string, unknown>;
+};
+
 const availableModules = [
   'fundamental',
   'technical',
@@ -52,6 +59,7 @@ const loading = ref(false);
 const error = ref('');
 const task = ref<TaskResponse | null>(null);
 const events = ref<TaskEvent[]>([]);
+const versions = ref<TaskVersion[]>([]);
 let pollTimer: number | undefined;
 let eventController: AbortController | null = null;
 const apiBase = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -106,6 +114,7 @@ async function createTask(): Promise<void> {
     });
     task.value = data;
     events.value = [];
+    versions.value = [];
     void startEventStream(data.id).catch((err: unknown) => {
       error.value = errorMessage(err, '事件流连接失败');
     });
@@ -125,10 +134,20 @@ async function refreshTask(id: string): Promise<void> {
     task.value = data;
     if (isFinished(data.status)) {
       stopPolling();
+      void loadVersions(id);
     }
   } catch (err: unknown) {
     error.value = errorMessage(err, '加载研究任务失败');
     stopPolling();
+  }
+}
+
+async function loadVersions(id: string): Promise<void> {
+  try {
+    const { data } = await http.get<TaskVersion[]>(`/research/tasks/${id}/versions`);
+    versions.value = data;
+  } catch {
+    versions.value = [];
   }
 }
 
@@ -253,6 +272,14 @@ onBeforeUnmount(stopPolling);
         </li>
       </ol>
     </div>
+
+    <div v-if="versions.length > 0" class="version-list">
+      <h2>任务版本</h2>
+      <details v-for="version in versions" :key="version.id">
+        <summary>版本 {{ version.version_no }}</summary>
+        <pre>{{ JSON.stringify(version.payload, null, 2) }}</pre>
+      </details>
+    </div>
   </section>
 </template>
 
@@ -321,5 +348,22 @@ onBeforeUnmount(stopPolling);
 .event-timeline time {
   color: #6b7280;
   font-size: 0.8rem;
+}
+
+.version-list {
+  margin-top: 1.5rem;
+}
+
+.version-list details {
+  margin: 0.5rem 0;
+}
+
+.version-list pre {
+  max-height: 30rem;
+  overflow: auto;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
 }
 </style>
