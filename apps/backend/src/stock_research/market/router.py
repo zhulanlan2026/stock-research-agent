@@ -9,7 +9,6 @@ from stock_research.market.cache import MarketSnapshotCache
 from stock_research.market.cycle import CycleAnalysisService
 from stock_research.market.dependencies import get_market_snapshot_cache
 from stock_research.market.indicators import IndicatorService
-from stock_research.market.torch_lstm import TorchLstmCyclePredictor
 from stock_research.market.schemas import (
     MarketBarResponse,
     MarketCyclePeriodResponse,
@@ -20,6 +19,7 @@ from stock_research.market.schemas import (
     MarketWaveletEnergyResponse,
 )
 from stock_research.market.store import MarketSnapshotStore
+from stock_research.market.torch_lstm import TorchLstmCyclePredictor
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
 
