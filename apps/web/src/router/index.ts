@@ -22,6 +22,10 @@ const router = createRouter({
           component: () => import('../app/MarketView.vue'),
         },
         {
+          path: 'fundamental',
+          component: () => import('../app/FundamentalView.vue'),
+        },
+        {
           path: 'supply-chain',
           component: () => import('../app/SupplyChainView.vue'),
         },

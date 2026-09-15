@@ -47,6 +47,7 @@ def _research() -> ResearchSummaryResult:
         module_summaries={
             "risk": {"status": "COMPLETED", "risk_level": "MEDIUM"},
         },
+        module_versions={"risk": "risk:1.0.0"},
         coverage=1.0,
         summary_text="确定性汇总",
     )

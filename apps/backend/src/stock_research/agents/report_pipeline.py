@@ -97,7 +97,9 @@ class StructuredReportAgent:
                     "概览",
                     {
                         "symbol": context.symbol,
+                        "as_of": research.as_of.isoformat(),
                         "coverage": research.coverage,
+                        "module_versions": dict(research.module_versions),
                         "risk_level": _nested(
                             research.module_summaries,
                             "risk",
@@ -155,6 +157,23 @@ class StructuredReportAgent:
                 StructuredReportSection(
                     "风险",
                     research.module_summaries.get("risk", {}),
+                ),
+                StructuredReportSection(
+                    "版本信息",
+                    {
+                        "report_version": REPORT_VERSION,
+                        "module_versions": dict(research.module_versions),
+                    },
+                ),
+                StructuredReportSection(
+                    "免责声明",
+                    {
+                        "disclaimer": (
+                            "本报告由系统基于结构化数据和文档证据自动生成，"
+                            "仅供研究参考，不构成任何投资建议。"
+                            "最终发布前必须经过人工审核。"
+                        ),
+                    },
                 ),
             ),
         )

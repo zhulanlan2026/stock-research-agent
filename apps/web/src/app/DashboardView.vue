@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { http } from '../api/client';
 import { useAuthStore } from '../stores/auth';
@@ -16,13 +16,8 @@ type ReportResponse = {
   as_of: string;
   module_version: string;
   summary: string;
+  narrative: string | null;
   sections: ReportSection[];
-};
-
-type FundamentalAnalysisResponse = {
-  summary: string;
-  metrics: Record<string, unknown>;
-  ratios: Record<string, unknown>;
 };
 
 const symbol = ref('600519.SH');
@@ -30,10 +25,21 @@ const mode = ref('standard');
 const loading = ref(false);
 const error = ref('');
 const report = ref<ReportResponse | null>(null);
-const faSymbol = ref('600519.SH');
-const faLoading = ref(false);
-const faError = ref('');
-const faResult = ref<FundamentalAnalysisResponse | null>(null);
+const activeTab = ref('综合报告');
+
+const tabs = computed(() => {
+  if (!report.value) {
+    return [];
+  }
+  return ['综合报告', ...report.value.sections.map((section) => section.title)];
+});
+
+const activeSection = computed(() => {
+  if (!report.value) {
+    return null;
+  }
+  return report.value.sections.find((section) => section.title === activeTab.value) ?? null;
+});
 
 function errorMessage(err: unknown, fallback: string): string {
   if (typeof err !== 'object' || err === null) {
@@ -48,11 +54,12 @@ async function generateReport(): Promise<void> {
   error.value = '';
   report.value = null;
   try {
-    const { data } = await http.post<ReportResponse>('/research/reports', {
+    const { data } = await http.post<ReportResponse>('/research/reports/comprehensive', {
       symbol: symbol.value,
       mode: mode.value,
     });
     report.value = data;
+    activeTab.value = '综合报告';
   } catch (err: unknown) {
     error.value = errorMessage(err, '生成报告失败');
   } finally {
@@ -60,47 +67,16 @@ async function generateReport(): Promise<void> {
   }
 }
 
-async function analyzeFundamental(): Promise<void> {
-  faLoading.value = true;
-  faError.value = '';
-  faResult.value = null;
-  try {
-    const { data } = await http.post<FundamentalAnalysisResponse>('/fundamental/analysis', {
-      symbol: faSymbol.value,
-    });
-    faResult.value = data;
-  } catch (err: unknown) {
-    faError.value = errorMessage(err, '财务分析失败');
-  } finally {
-    faLoading.value = false;
-  }
+function selectTab(tab: string): void {
+  activeTab.value = tab;
 }
+
 </script>
 
 <template>
   <section class="dashboard">
     <h1>研股工作台</h1>
     <p>当前登录：{{ auth.user?.email }}</p>
-
-    <div class="report-form">
-      <label>
-        股票代码
-        <input v-model="faSymbol" placeholder="例如 600519.SH" />
-      </label>
-      <button type="button" :disabled="faLoading" @click="analyzeFundamental">
-        {{ faLoading ? '分析中…' : '财务分析' }}
-      </button>
-    </div>
-
-    <p v-if="faError" class="error">{{ faError }}</p>
-
-    <div v-if="faResult" class="report-section">
-      <h3>财务分析</h3>
-      <p class="summary">{{ faResult.summary }}</p>
-      <pre>{{
-        JSON.stringify({ metrics: faResult.metrics, ratios: faResult.ratios }, null, 2)
-      }}</pre>
-    </div>
 
     <div class="report-form">
       <label>
@@ -125,10 +101,27 @@ async function analyzeFundamental(): Promise<void> {
     <div v-if="report" class="report">
       <h2>报告：{{ report.symbol }}</h2>
       <p class="meta">as_of: {{ report.as_of }} · {{ report.module_version }}</p>
-      <p class="summary">{{ report.summary }}</p>
-      <div v-for="section in report.sections" :key="section.title" class="report-section">
-        <h3>{{ section.title }}</h3>
-        <pre>{{ JSON.stringify(section.data, null, 2) }}</pre>
+
+      <nav class="report-tabs">
+        <button
+          v-for="tab in tabs"
+          :key="tab"
+          type="button"
+          :class="{ active: activeTab === tab }"
+          @click="selectTab(tab)"
+        >
+          {{ tab }}
+        </button>
+      </nav>
+
+      <div v-if="activeTab === '综合报告'" class="report-overview">
+        <p class="summary">{{ report.summary }}</p>
+        <p v-if="report.narrative" class="narrative">{{ report.narrative }}</p>
+      </div>
+
+      <div v-else-if="activeSection" class="report-section">
+        <h3>{{ activeSection.title }}</h3>
+        <pre>{{ JSON.stringify(activeSection.data, null, 2) }}</pre>
       </div>
     </div>
   </section>
@@ -167,10 +160,43 @@ async function analyzeFundamental(): Promise<void> {
   font-size: 0.85rem;
 }
 
+.report-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.report-tabs button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.report-tabs button.active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+.report-overview {
+  margin-top: 1rem;
+}
+
 .summary {
   padding: 0.75rem;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   border-radius: 4px;
+}
+
+.narrative {
+  padding: 0.75rem;
+  background: #fefce8;
+  border: 1px solid #fde047;
+  border-radius: 4px;
+  white-space: pre-wrap;
 }
 </style>

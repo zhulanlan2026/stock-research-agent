@@ -30,6 +30,14 @@ def _research_result(risk_level: str = "MEDIUM") -> ResearchSummaryResult:
             "news": {"status": "COMPLETED", "item_count": 0},
             "risk": {"status": "COMPLETED", "risk_level": risk_level},
         },
+        module_versions={
+            "fundamental": "fundamental:1.0.0",
+            "technical": "technical:1.1.0",
+            "market": "market:1.0.0",
+            "supply_chain": "supply_chain:1.0.0",
+            "news": "news:1.1.0",
+            "risk": "risk:1.0.0",
+        },
         coverage=1.0,
         summary_text="测试汇总",
     )
@@ -65,6 +73,8 @@ async def test_report_agent_renders_research_summary() -> None:
         "供应链",
         "新闻",
         "风险",
+        "版本信息",
+        "免责声明",
     ]
 
 

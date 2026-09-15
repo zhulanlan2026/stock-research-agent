@@ -42,6 +42,7 @@ class ReportRequest(BaseModel):
     symbol: str = Field(min_length=1, max_length=32)
     mode: str = Field(pattern="^(quick|standard|deep)$", default="standard")
     as_of: datetime | None = None
+    modules: list[str] | None = None
 
 
 class ReportSectionResponse(BaseModel):
@@ -54,4 +55,13 @@ class ReportResponse(BaseModel):
     as_of: datetime
     module_version: str
     summary: str
+    sections: list[ReportSectionResponse]
+
+
+class ComprehensiveReportResponse(BaseModel):
+    symbol: str
+    as_of: datetime
+    module_version: str
+    summary: str
+    narrative: str | None
     sections: list[ReportSectionResponse]

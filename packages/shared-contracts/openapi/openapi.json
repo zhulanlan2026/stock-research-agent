@@ -1095,6 +1095,52 @@
         ]
       }
     },
+    "/api/v1/research/reports/comprehensive": {
+      "post": {
+        "tags": [
+          "workflow"
+        ],
+        "summary": "Generate Comprehensive Report",
+        "operationId": "generate_comprehensive_report_api_v1_research_reports_comprehensive_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComprehensiveReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/research/tasks/{task_id}": {
       "get": {
         "tags": [
@@ -1387,6 +1433,55 @@
           "file"
         ],
         "title": "Body_upload_file_api_v1_files_post"
+      },
+      "ComprehensiveReportResponse": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "module_version": {
+            "type": "string",
+            "title": "Module Version"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "narrative": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narrative"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ReportSectionResponse"
+            },
+            "type": "array",
+            "title": "Sections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "as_of",
+          "module_version",
+          "summary",
+          "narrative",
+          "sections"
+        ],
+        "title": "ComprehensiveReportResponse"
       },
       "DocumentUploadResponse": {
         "properties": {
@@ -2287,6 +2382,20 @@
               }
             ],
             "title": "As Of"
+          },
+          "modules": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modules"
           }
         },
         "type": "object",

@@ -24,6 +24,7 @@ class ResearchSummaryResult:
     module_version: str
     status: str
     module_summaries: dict[str, dict[str, Any]]
+    module_versions: dict[str, str]
     coverage: float
     summary_text: str
     react_trace: dict[str, Any] | None = None
@@ -124,6 +125,10 @@ class ResearchSummaryAgent:
             name: _summarize_agent(name, results.get(name))
             for name in self.manifest.dependencies
         }
+        module_versions = {
+            name: _first_module_version(results.get(name))
+            for name in self.manifest.dependencies
+        }
         coverage = _coverage(module_summaries)
         return ResearchSummaryResult(
             symbol=context.symbol,
@@ -131,6 +136,7 @@ class ResearchSummaryAgent:
             module_version=RESEARCH_SUMMARY_VERSION,
             status="COMPLETED",
             module_summaries=module_summaries,
+            module_versions=module_versions,
             coverage=coverage,
             summary_text=_summary_text(context.symbol, module_summaries),
         )
@@ -159,6 +165,11 @@ def _summarize_agent(name: str, agent_result: Any) -> dict[str, Any]:
     return {"status": "COMPLETED", **_jsonable(summarizer(result))}
 
 
+def _first_module_version(agent_result: Any) -> str:
+    versions = getattr(agent_result, "module_versions", {}) or {}
+    return str(next(iter(versions.values()), "unknown"))
+
+
 def _summarize_fundamental(snapshot: Any) -> dict[str, Any]:
     metrics = getattr(snapshot, "metrics", {}) or {}
     ratios = getattr(snapshot, "ratios", {}) or {}
@@ -178,6 +189,7 @@ def _summarize_technical(result: Any) -> dict[str, Any]:
     cycle_analysis = getattr(result, "cycle_analysis", None)
     return {
         "module_version": getattr(result, "module_version", None),
+        "data_available": bool(points),
         "period": getattr(result, "period", None),
         "point_count": len(points),
         "latest_time": latest.time.isoformat() if latest else None,
@@ -215,6 +227,7 @@ def _summarize_market(result: Any) -> dict[str, Any]:
     summary = getattr(result, "summary", None)
     return {
         "module_version": getattr(result, "module_version", None),
+        "data_available": bool(getattr(summary, "sample_count", 0)),
         "last_price": getattr(summary, "last_price", None) if summary else None,
         "change_pct": getattr(summary, "change_pct", None) if summary else None,
         "sample_count": getattr(summary, "sample_count", 0) if summary else 0,

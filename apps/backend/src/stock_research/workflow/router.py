@@ -5,15 +5,18 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from stock_research.auth.dependencies import get_current_user
 from stock_research.fundamental.report import ReportService
 from stock_research.fundamental.research import DEFAULT_SCENARIOS, StandardResearchService
+from stock_research.iam.dependencies import require_permission
 from stock_research.stores.models.iam import User
-from stock_research.stores.session import get_session
+from stock_research.stores.session import get_session, get_session_factory
+from stock_research.workflow.comprehensive_report import ComprehensiveReportService
 from stock_research.workflow.runner import run_research_task
 from stock_research.workflow.schemas import (
+    ComprehensiveReportResponse,
     ReportRequest,
     ReportResponse,
     ReportSectionResponse,
@@ -25,6 +28,7 @@ from stock_research.workflow.sse import format_sse, parse_last_event_id
 from stock_research.workflow.store import WorkflowEventStore
 
 router = APIRouter(prefix="/research", tags=["workflow"])
+_require_report_read = require_permission("report.read")
 
 
 @router.post("/tasks", response_model=TaskResponse, status_code=status.HTTP_202_ACCEPTED)
@@ -82,6 +86,27 @@ async def generate_report(
             ReportSectionResponse(title=section.title, data=section.data)
             for section in report.sections
         ],
+    )
+
+
+@router.post(
+    "/reports/comprehensive",
+    response_model=ComprehensiveReportResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def generate_comprehensive_report(
+    body: ReportRequest,
+    current_user: User = Depends(_require_report_read),
+    factory: async_sessionmaker[AsyncSession] = Depends(get_session_factory),
+) -> ComprehensiveReportResponse:
+    return await ComprehensiveReportService().generate(
+        factory,
+        symbol=body.symbol,
+        mode=body.mode,
+        as_of=body.as_of,
+        modules=body.modules,
+        tenant_id=str(current_user.tenant_id),
+        user_id=str(current_user.id),
     )
 
 

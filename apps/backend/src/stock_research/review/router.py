@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.auth.dependencies import get_current_user
+from stock_research.outbox.publisher import OutboxPublisher
 from stock_research.review.human_review import HumanReviewService
 from stock_research.review.research_sync import apply_research_review_decision
 from stock_research.review.schemas import ReviewDecisionRequest, ReviewResponse
@@ -45,5 +46,17 @@ async def decide_review(
         reason_code=body.reason_code,
     )
     await apply_research_review_decision(session, review, body.decision)
+    await OutboxPublisher(session).publish(
+        aggregate_type="human_review",
+        aggregate_id=str(review.id),
+        event_type="review.decision",
+        payload={
+            "review_id": str(review.id),
+            "target_type": review.target_type,
+            "target_id": review.target_id,
+            "decision": body.decision,
+            "reason_code": body.reason_code,
+        },
+    )
     await session.commit()
     return ReviewResponse.model_validate(review)

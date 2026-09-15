@@ -379,6 +379,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/research/reports/comprehensive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Comprehensive Report */
+        post: operations["generate_comprehensive_report_api_v1_research_reports_comprehensive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/research/tasks/{task_id}": {
         parameters: {
             query?: never;
@@ -496,6 +513,24 @@ export interface components {
              * @default unknown
              */
             document_type: string;
+        };
+        /** ComprehensiveReportResponse */
+        ComprehensiveReportResponse: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Module Version */
+            module_version: string;
+            /** Summary */
+            summary: string;
+            /** Narrative */
+            narrative: string | null;
+            /** Sections */
+            sections: components["schemas"]["ReportSectionResponse"][];
         };
         /** DocumentUploadResponse */
         DocumentUploadResponse: {
@@ -796,6 +831,8 @@ export interface components {
             mode: string;
             /** As Of */
             as_of?: string | null;
+            /** Modules */
+            modules?: string[] | null;
         };
         /** ReportResponse */
         ReportResponse: {
@@ -1637,6 +1674,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_comprehensive_report_api_v1_research_reports_comprehensive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComprehensiveReportResponse"];
                 };
             };
             /** @description Validation Error */
