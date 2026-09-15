@@ -55,7 +55,12 @@ class RiskEngine:
         metrics, data_versions = await self._resolve_financial_metrics(symbol, as_of)
         financial_ratios = _financial_ratios(metrics)
 
-        bars = await self._bar_service.bars(symbol, period, limit)
+        bars = await self._bar_service.bars(
+            symbol,
+            period,
+            limit,
+            as_of=as_of,
+        )
         market_risk = _market_risk(bars)
         data_versions["market"] = {
             "period": period,

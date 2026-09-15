@@ -19,6 +19,11 @@ from stock_research.fundamental.engine import FundamentalEngine
 from stock_research.fundamental.risk import RiskEngine
 from stock_research.market.cycle import CycleAnalysisService
 from stock_research.market.engine import MarketEngine, TechnicalEngine
+from stock_research.services.data_access import (
+    FinancialDataService,
+    MarketDataService,
+    RiskService,
+)
 from stock_research.skills.gateway import SkillGateway
 
 
@@ -60,7 +65,7 @@ class FundamentalEngineAgent:
             if session_factory is None:
                 raise RuntimeError("session_factory is not configured")
             async with session_factory() as session:
-                snapshot = await FundamentalEngine(session).calculate(
+                snapshot = await FinancialDataService(session).fundamental(
                     context.symbol,
                     as_of,
                 )
@@ -106,6 +111,7 @@ class TechnicalEngineAgent:
     async def run(self, context: AgentContext) -> AgentResult:
         period = _string_setting(context.state, "technical_period", "1d")
         limit = _int_setting(context.state, "technical_limit", 100)
+        as_of = context.as_of
         rsi_period = _int_setting(context.state, "rsi_period", 14)
         macd_fast = _int_setting(context.state, "macd_fast", 12)
         macd_slow = _int_setting(context.state, "macd_slow", 26)
@@ -116,6 +122,7 @@ class TechnicalEngineAgent:
                 context.symbol,
                 period=period,
                 limit=limit,
+                as_of=as_of,
                 rsi_period=rsi_period,
                 macd_fast=macd_fast,
                 macd_slow=macd_slow,
@@ -127,18 +134,17 @@ class TechnicalEngineAgent:
             if session_factory is None:
                 raise RuntimeError("session_factory is not configured")
             async with session_factory() as session:
-                result = await TechnicalEngine(
-                    session,
-                    cycle_service=self._cycle_service,
-                ).calculate(
+                result = await MarketDataService(session).technical(
                     context.symbol,
                     period=period,
                     limit=limit,
+                    as_of=as_of,
                     rsi_period=rsi_period,
                     macd_fast=macd_fast,
                     macd_slow=macd_slow,
                     macd_signal=macd_signal,
                     cycle_horizon=cycle_horizon,
+                    cycle_service=self._cycle_service,
                 )
         return AgentResult(
             agent=self.manifest.name,
@@ -179,16 +185,22 @@ class MarketEngineAgent:
 
     async def run(self, context: AgentContext) -> AgentResult:
         limit = _int_setting(context.state, "market_limit", 20)
+        as_of = context.as_of
         if self._engine is not None:
-            result = await self._engine.calculate(context.symbol, limit=limit)
+            result = await self._engine.calculate(
+                context.symbol,
+                limit=limit,
+                as_of=as_of,
+            )
         else:
             session_factory = self._session_factory
             if session_factory is None:
                 raise RuntimeError("session_factory is not configured")
             async with session_factory() as session:
-                result = await MarketEngine(session).calculate(
+                result = await MarketDataService(session).market_snapshot(
                     context.symbol,
-                    limit=limit,
+                    limit,
+                    as_of=as_of,
                 )
         return AgentResult(
             agent=self.manifest.name,
@@ -244,7 +256,7 @@ class RiskEngineAgent:
             if session_factory is None:
                 raise RuntimeError("session_factory is not configured")
             async with session_factory() as session:
-                result = await RiskEngine(session).calculate(
+                result = await RiskService(session).calculate(
                     context.symbol,
                     as_of,
                     period=period,

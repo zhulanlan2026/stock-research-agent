@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.market.store import MarketBarStore
@@ -13,5 +15,7 @@ class MarketBarService:
         symbol: str,
         period: str = "1m",
         limit: int = 100,
+        *,
+        as_of: datetime | None = None,
     ) -> list[MarketBar]:
-        return await self.store.latest(symbol, period, limit)
+        return await self.store.latest(symbol, period, limit, as_of=as_of)

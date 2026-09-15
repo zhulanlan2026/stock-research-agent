@@ -52,6 +52,7 @@ class TechnicalEngine:
         symbol: str,
         period: str = "1m",
         limit: int = 100,
+        as_of: datetime | None = None,
         rsi_period: int = 14,
         macd_fast: int = 12,
         macd_slow: int = 26,
@@ -62,6 +63,7 @@ class TechnicalEngine:
             symbol,
             period,
             limit,
+            as_of=as_of,
             rsi_period=rsi_period,
             macd_fast=macd_fast,
             macd_slow=macd_slow,
@@ -91,8 +93,18 @@ class MarketEngine:
     def __init__(self, session: AsyncSession) -> None:
         self._analysis_service = MarketAnalysisService(session)
 
-    async def calculate(self, symbol: str, limit: int = 20) -> MarketEngineResult:
-        summary = await self._analysis_service.summarize(symbol, limit)
+    async def calculate(
+        self,
+        symbol: str,
+        limit: int = 20,
+        *,
+        as_of: datetime | None = None,
+    ) -> MarketEngineResult:
+        summary = await self._analysis_service.summarize(
+            symbol,
+            limit,
+            as_of=as_of,
+        )
         as_of = summary.event_time or datetime.now(timezone.utc)
         return MarketEngineResult(
             symbol=symbol,

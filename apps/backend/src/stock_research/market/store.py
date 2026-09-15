@@ -38,13 +38,21 @@ class MarketSnapshotStore:
         )
         await self.session.execute(statement)
 
-    async def latest(self, symbol: str, limit: int = 20) -> list[MarketSnapshot]:
-        result = await self.session.execute(
-            select(MarketSnapshot)
-            .where(MarketSnapshot.symbol == symbol)
-            .order_by(MarketSnapshot.event_time.desc(), MarketSnapshot.created_at.desc())
-            .limit(limit)
-        )
+    async def latest(
+        self,
+        symbol: str,
+        limit: int = 20,
+        *,
+        as_of: datetime | None = None,
+    ) -> list[MarketSnapshot]:
+        statement = select(MarketSnapshot).where(MarketSnapshot.symbol == symbol)
+        if as_of is not None:
+            statement = statement.where(MarketSnapshot.event_time <= as_of)
+        statement = statement.order_by(
+            MarketSnapshot.event_time.desc(),
+            MarketSnapshot.created_at.desc(),
+        ).limit(limit)
+        result = await self.session.execute(statement)
         return list(result.scalars().all())
 
 
@@ -87,13 +95,22 @@ class MarketBarStore:
         )
         await self.session.execute(statement)
 
-    async def latest(self, symbol: str, period: str, limit: int = 100) -> list[MarketBar]:
-        result = await self.session.execute(
-            select(MarketBar)
-            .where(MarketBar.symbol == symbol, MarketBar.period == period)
-            .order_by(MarketBar.bar_time.asc())
-            .limit(limit)
+    async def latest(
+        self,
+        symbol: str,
+        period: str,
+        limit: int = 100,
+        *,
+        as_of: datetime | None = None,
+    ) -> list[MarketBar]:
+        statement = select(MarketBar).where(
+            MarketBar.symbol == symbol,
+            MarketBar.period == period,
         )
+        if as_of is not None:
+            statement = statement.where(MarketBar.bar_time <= as_of)
+        statement = statement.order_by(MarketBar.bar_time.asc()).limit(limit)
+        result = await self.session.execute(statement)
         return list(result.scalars().all())
 
 

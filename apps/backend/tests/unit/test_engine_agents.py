@@ -31,7 +31,13 @@ class _FakeTechnicalEngine:
 
 
 class _FakeMarketEngine:
-    async def calculate(self, symbol: str, limit: int = 20) -> _EngineResult:
+    async def calculate(
+        self,
+        symbol: str,
+        limit: int = 20,
+        *,
+        as_of: datetime | None = None,
+    ) -> _EngineResult:
         return _EngineResult("market:1.0.0", symbol)
 
 

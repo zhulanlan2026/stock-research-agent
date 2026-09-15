@@ -77,18 +77,11 @@ class ParallelAgentExecutor:
                     for name in level
                 )
             )
-            failed: list[str] = []
             for name, result in batch:
                 results[name] = result
                 state[name] = result.data
                 state["results"] = dict(results)
-                if result.status == "FAILED":
-                    failed.append(name)
                 warnings.extend(result.warnings)
-            if failed:
-                raise AgentExecutionError(
-                    "agent execution failed: " + ", ".join(failed)
-                )
 
         return OrchestrationResult(
             results=results,
@@ -178,7 +171,16 @@ class LangGraphAgentExecutor:
             agent = registry.get(name)
             context = replace(state["context"], state=state)
             started = time.perf_counter()
-            result = await agent.run(context)
+            try:
+                result = await agent.run(context)
+            except Exception as exc:
+                result = AgentResult(
+                    agent=name,
+                    status="FAILED",
+                    data={"error": str(exc)},
+                    warnings=(f"agent failed: {type(exc).__name__}",),
+                    latency_ms=int((time.perf_counter() - started) * 1000),
+                )
             if result.latency_ms is None:
                 result = replace(
                     result,

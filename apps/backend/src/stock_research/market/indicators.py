@@ -36,12 +36,18 @@ class IndicatorService:
         symbol: str,
         period: str = "1m",
         limit: int = 100,
+        as_of: datetime | None = None,
         rsi_period: int = 14,
         macd_fast: int = 12,
         macd_slow: int = 26,
         macd_signal: int = 9,
     ) -> list[IndicatorPoint]:
-        bars = await self.store.latest(symbol, period, limit)
+        bars = await self.store.latest(
+            symbol,
+            period,
+            limit,
+            as_of=as_of,
+        )
         closes = [bar.close for bar in bars]
         volumes = [bar.volume for bar in bars]
 

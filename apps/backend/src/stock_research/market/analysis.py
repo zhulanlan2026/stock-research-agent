@@ -34,7 +34,13 @@ class MarketAnalysisService:
         self.store = MarketSnapshotStore(session)
         self.cache = cache
 
-    async def summarize(self, symbol: str, limit: int = 20) -> MarketSnapshotSummary:
+    async def summarize(
+        self,
+        symbol: str,
+        limit: int = 20,
+        *,
+        as_of: datetime | None = None,
+    ) -> MarketSnapshotSummary:
         if self.cache is not None:
             try:
                 cached = await self.cache.get_summary(symbol)
@@ -43,7 +49,7 @@ class MarketAnalysisService:
             if cached is not None:
                 return _summary_from_cache(symbol, cached)
 
-        snapshots = await self.store.latest(symbol, limit)
+        snapshots = await self.store.latest(symbol, limit, as_of=as_of)
         summary = summarize_snapshots(symbol, snapshots)
 
         if self.cache is not None:
