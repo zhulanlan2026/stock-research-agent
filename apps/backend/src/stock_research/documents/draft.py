@@ -9,6 +9,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from stock_research.stores.models.document import Document
 from stock_research.stores.models.evidence import Claim, Evidence
 
 
@@ -105,5 +106,27 @@ class EvidenceClaimDraftStore:
                 Evidence.tenant_id == tenant_id,
             )
             .order_by(Evidence.created_at, Evidence.id)
+        )
+        return list(result.scalars().all())
+
+    async def list_evidence_by_symbol(
+        self,
+        symbol: str,
+        *,
+        tenant_id: uuid.UUID,
+        as_of: datetime | None = None,
+    ) -> list[Evidence]:
+        statement = (
+            select(Evidence)
+            .join(Document, Evidence.document_id == Document.id)
+            .where(
+                Evidence.tenant_id == tenant_id,
+                Document.symbol == symbol,
+            )
+        )
+        if as_of is not None:
+            statement = statement.where(Evidence.created_at <= as_of)
+        result = await self.session.execute(
+            statement.order_by(Evidence.created_at, Evidence.id)
         )
         return list(result.scalars().all())

@@ -54,3 +54,41 @@ async def test_evidence_claim_draft_store_persists_drafts(db_context: Any) -> No
         assert evidence.source_level == "E1"
         assert claim.verification_status == "DRAFT"
         assert claim.confidence == 0.88
+
+
+async def test_evidence_claim_draft_store_lists_evidence_by_symbol(
+    db_context: Any,
+) -> None:
+    async with db_context.factory() as session:
+        document, version = await DocumentStore(session).create_document_with_version(
+            tenant_id=db_context.tenant_id,
+            owner_id=db_context.user_id,
+            document_type="pdf",
+            content_hash="sha256:doc",
+            raw_object_key="dev/doc.pdf",
+            symbol="600519.SH",
+            source_level="E1",
+        )
+        store = EvidenceClaimDraftStore(session)
+        evidence = await store.create_evidence(
+            EvidenceDraft(
+                tenant_id=db_context.tenant_id,
+                document_id=document.id,
+                document_version_id=version.id,
+                root_evidence_id=None,
+                page=1,
+                section="摘要",
+                content="证据内容",
+                source_level="E1",
+                citation_ready=True,
+                authorization={"visibility_scope": "PUBLIC"},
+            )
+        )
+        await session.commit()
+
+        items = await store.list_evidence_by_symbol(
+            "600519.SH",
+            tenant_id=db_context.tenant_id,
+        )
+
+        assert [item.id for item in items] == [evidence.id]

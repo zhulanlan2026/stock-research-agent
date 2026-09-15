@@ -43,6 +43,7 @@ async def test_generate_comprehensive_report(db_context: Any) -> None:
             "供应链",
             "新闻",
             "风险",
+            "证据强度",
         }.issubset(titles)
     finally:
         app.dependency_overrides.clear()

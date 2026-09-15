@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -8,10 +9,12 @@ from stock_research.agents.orchestrator import AgentOrchestrator
 from stock_research.agents.protocol import AgentContext
 from stock_research.agents.registry import AgentRegistry
 from stock_research.core.config import get_settings
+from stock_research.documents.draft import EvidenceClaimDraftStore
 from stock_research.market.cycle import CycleAnalysisService
 from stock_research.market.torch_lstm import TorchLstmCyclePredictor
 from stock_research.model_gateway.deepseek import DeepSeekClient
 from stock_research.model_gateway.gateway import ModelGateway
+from stock_research.services.evidence_strength import EvidenceStrengthService
 from stock_research.workflow.schemas import (
     ComprehensiveReportResponse,
     ReportSectionResponse,
@@ -46,11 +49,12 @@ class ComprehensiveReportService:
             )
         )
         orchestrator = AgentOrchestrator(registry, prefer_langgraph=True)
+        effective_as_of = as_of or datetime.now(timezone.utc)
         context = AgentContext(
             task_id="comprehensive-report",
             symbol=symbol,
             mode=mode,
-            as_of=as_of or datetime.now(timezone.utc),
+            as_of=effective_as_of,
             tenant_id=tenant_id,
             user_id=user_id,
             scopes=frozenset({"research.standard.execute"}),
@@ -73,6 +77,13 @@ class ComprehensiveReportService:
         if report is None:
             raise RuntimeError("comprehensive report result is missing")
 
+        evidence_data = await self._evidence_strength(
+            factory=session_factory,
+            symbol=symbol,
+            as_of=effective_as_of,
+            tenant_id=tenant_id,
+        )
+
         return ComprehensiveReportResponse(
             symbol=report.symbol,
             as_of=report.as_of,
@@ -85,7 +96,41 @@ class ComprehensiveReportService:
                     data=dict(section.data),
                 )
                 for section in report.sections
+            ]
+            + [
+                ReportSectionResponse(
+                    title="证据强度",
+                    data=evidence_data,
+                )
             ],
+        )
+
+    async def _evidence_strength(
+        self,
+        *,
+        factory: Any,
+        symbol: str,
+        as_of: datetime,
+        tenant_id: str | None,
+    ) -> dict[str, Any]:
+        try:
+            tenant_uuid = uuid.UUID(tenant_id) if tenant_id else None
+        except ValueError:
+            tenant_uuid = None
+
+        evidence: list[Any] = []
+        if tenant_uuid is not None:
+            async with factory() as session:
+                evidence = await EvidenceClaimDraftStore(session).list_evidence_by_symbol(
+                    symbol,
+                    tenant_id=tenant_uuid,
+                    as_of=as_of,
+                )
+
+        return EvidenceStrengthService().summarize(
+            symbol=symbol,
+            as_of=as_of,
+            evidence=evidence,
         )
 
     def _build_model_gateway(self, settings: Any) -> ModelGateway | None:
