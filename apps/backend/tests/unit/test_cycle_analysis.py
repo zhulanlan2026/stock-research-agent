@@ -6,7 +6,10 @@ from collections.abc import Sequence
 from typing import Any
 
 from stock_research.market.cycle import CycleAnalysisService, LstmForecast
-from stock_research.market.torch_lstm import TorchLstmCyclePredictor
+from stock_research.market.torch_lstm import (
+    TorchLstmCyclePredictor,
+    _configure_torch_reproducibility,
+)
 
 
 def test_cycle_analysis_requires_minimum_samples() -> None:
@@ -90,3 +93,33 @@ def test_torch_lstm_returns_unavailable_when_torch_is_missing(
     assert forecast.available is False
     assert forecast.predictions == ()
     assert "torch is not installed" in (forecast.reason or "")
+
+
+def test_torch_lstm_reproducibility_configures_seed_and_determinism() -> None:
+    class _Cudnn:
+        deterministic = False
+        benchmark = True
+
+    class _Backends:
+        cudnn = _Cudnn()
+
+    class _Torch:
+        def __init__(self) -> None:
+            self.manual_seed_value: int | None = None
+            self.deterministic_enabled: bool | None = None
+            self.backends = _Backends()
+
+        def manual_seed(self, seed: int) -> None:
+            self.manual_seed_value = seed
+
+        def use_deterministic_algorithms(self, enabled: bool) -> None:
+            self.deterministic_enabled = enabled
+
+    torch_module = _Torch()
+
+    _configure_torch_reproducibility(torch_module, 7)
+
+    assert torch_module.manual_seed_value == 7
+    assert torch_module.deterministic_enabled is True
+    assert torch_module.backends.cudnn.deterministic is True
+    assert torch_module.backends.cudnn.benchmark is False

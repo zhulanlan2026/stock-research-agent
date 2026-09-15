@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import math
+import random
 import time
 from collections.abc import Sequence
 from typing import Any
 
+import numpy as np
 import structlog
 
 from stock_research.market.cycle import LstmForecast
@@ -61,7 +63,7 @@ class TorchLstmCyclePredictor:
                 reason="insufficient sample size for LSTM training",
             )
 
-        torch.manual_seed(self._seed)
+        _configure_torch_reproducibility(torch, self._seed)
         series = torch.tensor(clean, dtype=torch.float32)
         mean = float(series.mean())
         std = float(series.std())
@@ -152,3 +154,19 @@ class TorchLstmCyclePredictor:
             predictions=tuple(predictions),
             latency_ms=latency_ms,
         )
+
+
+def _configure_torch_reproducibility(torch_module: Any, seed: int) -> None:
+    """固定 Python、NumPy 与 PyTorch 的随机状态，保证同参数可复现。"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch_module.manual_seed(seed)
+    try:
+        torch_module.use_deterministic_algorithms(True)
+    except Exception:
+        logger.debug("torch deterministic algorithms are not supported")
+    if hasattr(torch_module, "backends"):
+        cudnn = getattr(torch_module.backends, "cudnn", None)
+        if cudnn is not None:
+            cudnn.deterministic = True
+            cudnn.benchmark = False
