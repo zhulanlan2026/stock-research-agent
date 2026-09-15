@@ -54,7 +54,7 @@ async def test_snapshot_engine_aggregates_all_modules(db_context: Any) -> None:
         assert snapshot.module_version == "snapshot:1.0.0"
         assert snapshot.fundamental.module_version == "fundamental:1.0.0"
         assert snapshot.quality.module_version == "quality:1.0.0"
-        assert snapshot.valuation.module_version == "valuation:1.0.0"
+        assert snapshot.valuation.module_version == "valuation:1.1.0"
         assert snapshot.risk.module_version == "risk:1.0.0"
         assert snapshot.scenario is not None
         assert snapshot.decision is not None

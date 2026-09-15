@@ -16,13 +16,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from stock_research.fundamental.pit import PitResolver
 from stock_research.market.analysis import MarketAnalysisService
 
-VALUATION_ENGINE_VERSION = "valuation:1.0.0"
+VALUATION_ENGINE_VERSION = "valuation:1.1.0"
 
 INPUT_METRICS = (
     "revenue",
     "net_income",
     "total_equity",
     "shares_outstanding",
+    "operating_cash_flow",
 )
 
 
@@ -36,6 +37,10 @@ class ValuationSnapshot:
     shares_outstanding: Decimal | None
     per_share: dict[str, Decimal | None]
     multiples: dict[str, Decimal | None]
+    peg: Decimal | None
+    dcf: dict[str, Decimal | None]
+    safety_margin: Decimal | None
+    valuation_label: str
     market_cap: Decimal | None
     coverage: Decimal
 
@@ -54,9 +59,13 @@ class ValuationEngine:
         symbol: str,
         as_of: datetime,
         price: Decimal | None = None,
+        *,
+        earnings_growth: Decimal | None = None,
+        discount_rate: Decimal = Decimal("0.10"),
+        growth_rate: Decimal = Decimal("0.03"),
     ) -> ValuationSnapshot:
         if price is None:
-            summary = await self._market.summarize(symbol)
+            summary = await self._market.summarize(symbol, as_of=as_of)
             price = _decimal_from_float(summary.last_price)
 
         metrics: dict[str, Decimal | None] = {}
@@ -85,6 +94,18 @@ class ValuationEngine:
             else Decimal("0")
         )
         per_share, multiples, market_cap = _valuation_values(price, metrics)
+        peg = _peg(multiples.get("pe"), earnings_growth)
+        fcf_per_share = _ratio(
+            metrics.get("operating_cash_flow"),
+            metrics.get("shares_outstanding"),
+        )
+        dcf = _dcf(
+            fcf_per_share,
+            discount_rate=discount_rate,
+            growth_rate=growth_rate,
+        )
+        intrinsic_value = dcf.get("intrinsic_value_per_share")
+        safety_margin = _safety_margin(intrinsic_value, price)
         data_versions["price"] = {"source": "market_snapshot_latest"}
 
         return ValuationSnapshot(
@@ -96,6 +117,10 @@ class ValuationEngine:
             shares_outstanding=metrics["shares_outstanding"],
             per_share=per_share,
             multiples=multiples,
+            peg=peg,
+            dcf=dcf,
+            safety_margin=safety_margin,
+            valuation_label=_valuation_label(safety_margin),
             market_cap=market_cap,
             coverage=coverage,
         )
@@ -138,6 +163,61 @@ def _multiply(left: Decimal | None, right: Decimal | None) -> Decimal | None:
     if left is None or right is None:
         return None
     return left * right
+
+
+def _peg(pe: Decimal | None, earnings_growth: Decimal | None) -> Decimal | None:
+    if pe is None or earnings_growth is None or earnings_growth <= 0:
+        return None
+    return pe / (earnings_growth * Decimal("100"))
+
+
+def _dcf(
+    fcf_per_share: Decimal | None,
+    *,
+    discount_rate: Decimal,
+    growth_rate: Decimal,
+) -> dict[str, Decimal | None]:
+    if (
+        fcf_per_share is None
+        or fcf_per_share <= 0
+        or discount_rate <= growth_rate
+    ):
+        return {
+            "fcf_per_share": fcf_per_share,
+            "discount_rate": discount_rate,
+            "growth_rate": growth_rate,
+            "intrinsic_value_per_share": None,
+        }
+    intrinsic_value = (
+        fcf_per_share
+        * (Decimal("1") + growth_rate)
+        / (discount_rate - growth_rate)
+    )
+    return {
+        "fcf_per_share": fcf_per_share,
+        "discount_rate": discount_rate,
+        "growth_rate": growth_rate,
+        "intrinsic_value_per_share": intrinsic_value,
+    }
+
+
+def _safety_margin(
+    intrinsic_value: Decimal | None,
+    price: Decimal | None,
+) -> Decimal | None:
+    if intrinsic_value is None or price is None or intrinsic_value == 0:
+        return None
+    return (intrinsic_value - price) / intrinsic_value
+
+
+def _valuation_label(safety_margin: Decimal | None) -> str:
+    if safety_margin is None:
+        return "数据不足"
+    if safety_margin >= Decimal("0.15"):
+        return "低估"
+    if safety_margin <= Decimal("-0.15"):
+        return "高估"
+    return "合理"
 
 
 def _decimal_from_float(value: float | None) -> Decimal | None:

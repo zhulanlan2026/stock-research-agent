@@ -73,6 +73,7 @@ async def test_valuation_engine_calculates_from_pit_facts(db_context: Any) -> No
             "net_income": "20.00",
             "total_equity": "150.00",
             "shares_outstanding": "10.00",
+            "operating_cash_flow": "30.00",
         }.items():
             await store.upsert(_fact("600519.SH", metric, value))
         await session.commit()
@@ -83,11 +84,16 @@ async def test_valuation_engine_calculates_from_pit_facts(db_context: Any) -> No
             price=Decimal("30.00"),
         )
 
-        assert snapshot.module_version == "valuation:1.0.0"
+        assert snapshot.module_version == "valuation:1.1.0"
         assert snapshot.price == Decimal("30.00")
         assert snapshot.shares_outstanding == Decimal("10.00")
         assert snapshot.per_share["eps"] == Decimal("2")
         assert snapshot.multiples["pe"] == Decimal("15")
+        assert snapshot.peg is None
+        assert snapshot.dcf["fcf_per_share"] == Decimal("3")
+        assert snapshot.dcf["intrinsic_value_per_share"] == Decimal("44.14285714285714285714285714")
+        assert snapshot.safety_margin == Decimal("0.3203883495145631067961165048")
+        assert snapshot.valuation_label == "低估"
         assert snapshot.market_cap == Decimal("300")
         assert snapshot.coverage == Decimal("1")
 

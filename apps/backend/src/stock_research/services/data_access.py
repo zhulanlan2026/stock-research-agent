@@ -156,11 +156,17 @@ class ValuationService:
         as_of: datetime,
         *,
         price: Decimal | None = None,
+        earnings_growth: Decimal | None = None,
+        discount_rate: Decimal = Decimal("0.10"),
+        growth_rate: Decimal = Decimal("0.03"),
     ) -> Any:
         return await ValuationEngine(self.session).calculate(
             symbol,
             as_of,
             price=price,
+            earnings_growth=earnings_growth,
+            discount_rate=discount_rate,
+            growth_rate=growth_rate,
         )
 
     async def scenario(

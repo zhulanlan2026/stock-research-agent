@@ -108,6 +108,10 @@ def _chinese_summary(result: StandardResearchResult) -> str:
     pe = snapshot.valuation.multiples.get("pe")
     if pe is not None:
         parts.append(f"市盈率（PE）约 {pe:.2f} 倍。")
+    if snapshot.valuation.peg is not None:
+        parts.append(f"PEG 约 {snapshot.valuation.peg:.2f}。")
+    if snapshot.valuation.safety_margin is not None:
+        parts.append(f"估值状态：{snapshot.valuation.valuation_label}。")
 
     net_income = snapshot.fundamental.metrics.get("net_income")
     if net_income is not None:
@@ -136,6 +140,13 @@ def _valuation_data(valuation: ValuationSnapshot) -> dict[str, Any]:
         "pe": _decimal_str(valuation.multiples["pe"]),
         "pb": _decimal_str(valuation.multiples["pb"]),
         "ps": _decimal_str(valuation.multiples["ps"]),
+        "peg": _decimal_str(valuation.peg),
+        "dcf": {
+            key: _decimal_str(value)
+            for key, value in valuation.dcf.items()
+        },
+        "safety_margin": _decimal_str(valuation.safety_margin),
+        "valuation_label": valuation.valuation_label,
         "market_cap": _decimal_str(valuation.market_cap),
     }
 
