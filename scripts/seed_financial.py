@@ -16,6 +16,7 @@ METRICS = {
     "current_assets": "700.00",
     "current_liabilities": "320.00",
     "operating_cash_flow": "300.00",
+    "shares_outstanding": "12.56",
 }
 
 
