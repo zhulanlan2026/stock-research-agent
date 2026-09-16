@@ -20,6 +20,7 @@ from stock_research.core.logging import configure_logging
 from stock_research.core.middleware import RequestContextMiddleware
 from stock_research.documents.citation_router import router as citation_router
 from stock_research.documents.router import router as documents_router
+from stock_research.fundamental.consumer import FinancialFactConsumer
 from stock_research.fundamental.router import router as fundamental_router
 from stock_research.iam.router import router as iam_router
 from stock_research.ingest.router import router as ingest_router
@@ -44,13 +45,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     consume_task = asyncio.create_task(
         _consume_inbox_loop(settings.market_consume_interval_seconds)
     )
+    financial_fact_task = asyncio.create_task(
+        _consume_financial_fact_loop(settings.market_consume_interval_seconds)
+    )
     outbox_task = asyncio.create_task(
         _dispatch_outbox_loop(settings.outbox_dispatch_interval_seconds)
     )
     try:
         yield
     finally:
-        for task in (consume_task, outbox_task):
+        for task in (consume_task, financial_fact_task, outbox_task):
             task.cancel()
             try:
                 await task
@@ -65,6 +69,16 @@ async def _consume_inbox_loop(interval_seconds: float) -> None:
                 await MarketDataConsumer(session).consume_pending(limit=100)
         except Exception:
             logger.exception("market inbox consume failed")
+        await asyncio.sleep(interval_seconds)
+
+
+async def _consume_financial_fact_loop(interval_seconds: float) -> None:
+    while True:
+        try:
+            async with session_factory() as session:
+                await FinancialFactConsumer(session).consume_pending(limit=100)
+        except Exception:
+            logger.exception("financial fact inbox consume failed")
         await asyncio.sleep(interval_seconds)
 
 
