@@ -281,6 +281,10 @@ ROA
 财务计算不允许 LLM 直接计算
 ```
 
+基础能力已落地：新增 `ProfessionalFinancialEngine` 和
+`POST /api/v1/fundamental/professional`，覆盖同比、速动比率、利息保障倍数、
+自由现金流、杜邦分析和财务风险点。
+
 ---
 
 ### 4.5 估值分析
@@ -833,7 +837,7 @@ Citation
 
 ### 9.2 Graph RAG
 
-当前未实现，未来用于：
+基础能力已落地：`GraphRagRetriever` 已可从 Neo4j 图边中按查询词召回关系证据。
 
 ```text
 供应链实体关系问答
@@ -843,7 +847,7 @@ Citation
 
 ### 9.3 Agentic RAG
 
-当前未实现，未来用于：
+基础能力已落地：`AgenticRagService` 已支持确定性多轮查询改写、检索去重和证据链记录。
 
 ```text
 多跳检索
