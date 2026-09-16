@@ -6,9 +6,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.auth.dependencies import get_current_user
 from stock_research.fundamental.engine import FundamentalEngine, FundamentalSnapshot
+from stock_research.fundamental.professional import (
+    ProfessionalFinancialEngine,
+    professional_payload,
+    professional_summary,
+)
 from stock_research.fundamental.schemas import (
     FundamentalAnalysisRequest,
     FundamentalAnalysisResponse,
+    ProfessionalFinancialAnalysisResponse,
 )
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
@@ -49,6 +55,31 @@ async def analyze_fundamental(
                 snapshot.ratios["operating_cash_flow_to_net_income"]
             ),
         },
+    )
+
+
+@router.post("/professional", response_model=ProfessionalFinancialAnalysisResponse)
+async def analyze_professional_financial(
+    body: FundamentalAnalysisRequest,
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> ProfessionalFinancialAnalysisResponse:
+    snapshot = await ProfessionalFinancialEngine(session).calculate(
+        body.symbol,
+        body.as_of or datetime.now(timezone.utc),
+    )
+    payload = professional_payload(snapshot)
+    return ProfessionalFinancialAnalysisResponse(
+        symbol=snapshot.symbol,
+        as_of=snapshot.as_of,
+        coverage=float(snapshot.coverage),
+        summary=professional_summary(snapshot),
+        metrics=payload["metrics"],
+        ratios=payload["ratios"],
+        growth=payload["growth"],
+        dupont=payload["dupont"],
+        free_cash_flow=payload["free_cash_flow"],
+        risk_points=payload["risk_points"],
     )
 
 

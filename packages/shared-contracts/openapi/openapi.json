@@ -398,6 +398,52 @@
         ]
       }
     },
+    "/api/v1/fundamental/professional": {
+      "post": {
+        "tags": [
+          "fundamental"
+        ],
+        "summary": "Analyze Professional Financial",
+        "operationId": "analyze_professional_financial_api_v1_fundamental_professional_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FundamentalAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfessionalFinancialAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/me/permissions": {
       "get": {
         "tags": [
@@ -2402,6 +2448,79 @@
           "energy"
         ],
         "title": "MarketWaveletEnergyResponse"
+      },
+      "ProfessionalFinancialAnalysisResponse": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "coverage": {
+            "type": "number",
+            "title": "Coverage"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics"
+          },
+          "ratios": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Ratios"
+          },
+          "growth": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Growth"
+          },
+          "dupont": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Dupont"
+          },
+          "free_cash_flow": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Cash Flow"
+          },
+          "risk_points": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Risk Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "as_of",
+          "coverage",
+          "summary",
+          "metrics",
+          "ratios",
+          "growth",
+          "dupont",
+          "free_cash_flow",
+          "risk_points"
+        ],
+        "title": "ProfessionalFinancialAnalysisResponse"
       },
       "ReportRequest": {
         "properties": {

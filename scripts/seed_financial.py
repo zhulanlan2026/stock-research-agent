@@ -9,13 +9,17 @@ from stock_research.stores.session import session_factory
 METRICS = {
     "revenue": "1200.00",
     "cost_of_revenue": "450.00",
+    "operating_income": "300.00",
     "net_income": "250.00",
     "total_assets": "2500.00",
     "total_liabilities": "900.00",
     "total_equity": "1600.00",
     "current_assets": "700.00",
     "current_liabilities": "320.00",
+    "inventory": "180.00",
     "operating_cash_flow": "300.00",
+    "capital_expenditure": "80.00",
+    "interest_expense": "20.00",
     "shares_outstanding": "12.56",
 }
 

@@ -208,6 +208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/fundamental/professional": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Analyze Professional Financial */
+        post: operations["analyze_professional_financial_api_v1_fundamental_professional_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/permissions": {
         parameters: {
             query?: never;
@@ -837,6 +854,40 @@ export interface components {
             /** Energy */
             energy: number;
         };
+        /** ProfessionalFinancialAnalysisResponse */
+        ProfessionalFinancialAnalysisResponse: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Coverage */
+            coverage: number;
+            /** Summary */
+            summary: string;
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /** Ratios */
+            ratios: {
+                [key: string]: unknown;
+            };
+            /** Growth */
+            growth: {
+                [key: string]: unknown;
+            };
+            /** Dupont */
+            dupont: {
+                [key: string]: unknown;
+            };
+            /** Free Cash Flow */
+            free_cash_flow: string | null;
+            /** Risk Points */
+            risk_points: string[];
+        };
         /** ReportRequest */
         ReportRequest: {
             /** Symbol */
@@ -1337,6 +1388,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FundamentalAnalysisResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_professional_financial_api_v1_fundamental_professional_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FundamentalAnalysisRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfessionalFinancialAnalysisResponse"];
                 };
             };
             /** @description Validation Error */

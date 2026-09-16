@@ -52,3 +52,16 @@ class FundamentalAnalysisResponse(BaseModel):
     summary: str
     metrics: dict[str, object]
     ratios: dict[str, object]
+
+
+class ProfessionalFinancialAnalysisResponse(BaseModel):
+    symbol: str
+    as_of: datetime
+    coverage: float
+    summary: str
+    metrics: dict[str, object]
+    ratios: dict[str, object]
+    growth: dict[str, object]
+    dupont: dict[str, object]
+    free_cash_flow: str | None
+    risk_points: list[str]

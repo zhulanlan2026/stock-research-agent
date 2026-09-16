@@ -37,3 +37,25 @@ async def test_analyze_fundamental(db_context: Any) -> None:
         assert "ratios" in data
     finally:
         app.dependency_overrides.clear()
+
+
+async def test_analyze_professional_financial(db_context: Any) -> None:
+    app.dependency_overrides[get_session] = db_context.override
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            token = await _login(client, db_context)
+            response = await client.post(
+                "/api/v1/fundamental/professional",
+                json={"symbol": "600519.SH"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["symbol"] == "600519.SH"
+        assert "growth" in data
+        assert "dupont" in data
+        assert "risk_points" in data
+    finally:
+        app.dependency_overrides.clear()

@@ -73,3 +73,27 @@ class FinancialFactStore:
         ).limit(1)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+    async def list_for_symbol(
+        self,
+        *,
+        symbol: str,
+        as_of: datetime,
+        metrics: list[str] | None = None,
+        truth_status: str = "VERIFIED",
+    ) -> list[FinancialFact]:
+        query = select(FinancialFact).where(
+            FinancialFact.symbol == symbol,
+            FinancialFact.available_at <= as_of,
+            FinancialFact.truth_status == truth_status,
+        )
+        if metrics is not None:
+            query = query.where(FinancialFact.metric.in_(metrics))
+        query = query.order_by(
+            FinancialFact.metric,
+            FinancialFact.period.desc(),
+            FinancialFact.available_at.desc(),
+            FinancialFact.revision_no.desc(),
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
