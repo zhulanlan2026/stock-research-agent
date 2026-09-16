@@ -37,6 +37,7 @@ async def test_generate_comprehensive_report(db_context: Any) -> None:
         assert {
             "概览",
             "财务",
+            "专业财务",
             "技术",
             "周期分析",
             "行情",
@@ -45,5 +46,10 @@ async def test_generate_comprehensive_report(db_context: Any) -> None:
             "风险",
             "证据强度",
         }.issubset(titles)
+        professional = next(
+            section for section in data["sections"] if section["title"] == "专业财务"
+        )
+        assert "risk_points" in professional["data"]
+        assert "dupont" in professional["data"]
     finally:
         app.dependency_overrides.clear()

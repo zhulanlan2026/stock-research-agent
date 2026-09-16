@@ -10,6 +10,10 @@ from stock_research.agents.protocol import AgentContext
 from stock_research.agents.registry import AgentRegistry
 from stock_research.core.config import get_settings
 from stock_research.documents.draft import EvidenceClaimDraftStore
+from stock_research.fundamental.professional import (
+    ProfessionalFinancialEngine,
+    professional_payload,
+)
 from stock_research.market.cycle import CycleAnalysisService
 from stock_research.market.torch_lstm import TorchLstmCyclePredictor
 from stock_research.model_gateway.deepseek import DeepSeekClient
@@ -83,6 +87,11 @@ class ComprehensiveReportService:
             as_of=effective_as_of,
             tenant_id=tenant_id,
         )
+        professional_data = await self._professional_financial(
+            factory=session_factory,
+            symbol=symbol,
+            as_of=effective_as_of,
+        )
 
         return ComprehensiveReportResponse(
             symbol=report.symbol,
@@ -98,6 +107,10 @@ class ComprehensiveReportService:
                 for section in report.sections
             ]
             + [
+                ReportSectionResponse(
+                    title="专业财务",
+                    data=professional_data,
+                ),
                 ReportSectionResponse(
                     title="证据强度",
                     data=evidence_data,
@@ -132,6 +145,20 @@ class ComprehensiveReportService:
             as_of=as_of,
             evidence=evidence,
         )
+
+    async def _professional_financial(
+        self,
+        *,
+        factory: Any,
+        symbol: str,
+        as_of: datetime,
+    ) -> dict[str, Any]:
+        async with factory() as session:
+            snapshot = await ProfessionalFinancialEngine(session).calculate(
+                symbol,
+                as_of,
+            )
+        return professional_payload(snapshot)
 
     def _build_model_gateway(self, settings: Any) -> ModelGateway | None:
         if not settings.llm_api_key:
