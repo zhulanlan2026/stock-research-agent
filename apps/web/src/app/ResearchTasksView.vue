@@ -62,6 +62,12 @@ const events = ref<TaskEvent[]>([]);
 const versions = ref<TaskVersion[]>([]);
 let pollTimer: number | undefined;
 let eventController: AbortController | null = null;
+let eventRetryTimer: number | undefined;
+let eventRetryCount = 0;
+let lastEventId = 0;
+let manualStop = false;
+const eventStatus = ref<'idle' | 'connecting' | 'connected' | 'reconnecting' | 'error'>('idle');
+const maxEventRetries = 5;
 const apiBase = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 function errorMessage(err: unknown, fallback: string): string {
@@ -94,10 +100,16 @@ function stopPolling(): void {
 }
 
 function stopEventStream(): void {
+  if (eventRetryTimer !== undefined) {
+    window.clearTimeout(eventRetryTimer);
+    eventRetryTimer = undefined;
+  }
   if (eventController !== null) {
+    manualStop = true;
     eventController.abort();
     eventController = null;
   }
+  eventStatus.value = 'idle';
 }
 
 async function createTask(): Promise<void> {
@@ -115,9 +127,9 @@ async function createTask(): Promise<void> {
     task.value = data;
     events.value = [];
     versions.value = [];
-    void startEventStream(data.id).catch((err: unknown) => {
-      error.value = errorMessage(err, '事件流连接失败');
-    });
+    lastEventId = 0;
+    eventRetryCount = 0;
+    void startEventStream(data.id);
     pollTimer = window.setInterval(() => {
       void refreshTask(data.id);
     }, 2000);
@@ -153,38 +165,78 @@ async function loadVersions(id: string): Promise<void> {
 
 async function startEventStream(id: string): Promise<void> {
   stopEventStream();
+  manualStop = false;
+  eventStatus.value = 'connecting';
   const controller = new AbortController();
   eventController = controller;
-  const response = await fetch(`${apiBase}/research/tasks/${id}/events`, {
-    headers: {
-      Authorization: `Bearer ${getAccessToken() ?? ''}`,
-    },
-    signal: controller.signal,
-  });
-  if (!response.ok) {
-    throw new Error('事件流请求失败');
-  }
-  if (!response.body) {
-    return;
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
+  try {
+    const response = await fetch(`${apiBase}/research/tasks/${id}/events`, {
+      headers: {
+        Authorization: `Bearer ${getAccessToken() ?? ''}`,
+        'Last-Event-ID': String(lastEventId),
+      },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error('事件流请求失败');
     }
-    buffer += decoder.decode(value, { stream: true });
-    const blocks = buffer.split('\n\n');
-    buffer = blocks.pop() ?? '';
-    for (const block of blocks) {
-      if (block.trim().length > 0) {
-        events.value.push(...parseEvents(`${block}\n\n`));
+    if (!response.body) {
+      throw new Error('事件流响应没有 body');
+    }
+
+    eventStatus.value = 'connected';
+    eventRetryCount = 0;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split('\n\n');
+      buffer = blocks.pop() ?? '';
+      for (const block of blocks) {
+        if (block.trim().length > 0) {
+          const parsed = parseEvents(`${block}\n\n`);
+          events.value.push(...parsed);
+          lastEventId = parsed.reduce(
+            (current, event) => Math.max(current, event.sequence_no),
+            lastEventId,
+          );
+        }
       }
     }
+  } catch (err: unknown) {
+    if (manualStop) {
+      return;
+    }
+    if (isFinished(task.value?.status ?? '')) {
+      eventStatus.value = 'error';
+      error.value = errorMessage(err, '事件流连接失败');
+      return;
+    }
   }
+  if (!manualStop && !isFinished(task.value?.status ?? '')) {
+    scheduleEventReconnect(id);
+  } else if (!manualStop) {
+    eventStatus.value = 'idle';
+  }
+}
+
+function scheduleEventReconnect(id: string): void {
+  if (eventRetryCount >= maxEventRetries || manualStop) {
+    eventStatus.value = 'error';
+    error.value = '事件流重连失败，请手动刷新任务';
+    return;
+  }
+  eventRetryCount += 1;
+  eventStatus.value = 'reconnecting';
+  eventRetryTimer = window.setTimeout(() => {
+    eventRetryTimer = undefined;
+    void startEventStream(id);
+  }, Math.min(1000 * 2 ** (eventRetryCount - 1), 10000));
 }
 
 function parseEvents(text: string): TaskEvent[] {
@@ -247,6 +299,14 @@ onBeforeUnmount(stopPolling);
 
     <div v-if="task" class="task-card">
       <h2>任务 {{ task.id }}</h2>
+      <p class="event-status">事件流：{{ eventStatus }}</p>
+      <button
+        v-if="!isFinished(task.status) && eventStatus !== 'idle'"
+        type="button"
+        @click="stopEventStream"
+      >
+        停止事件流
+      </button>
       <dl>
         <dt>标的</dt>
         <dd>{{ task.symbol }}</dd>
@@ -324,6 +384,11 @@ onBeforeUnmount(stopPolling);
 
 .task-card dd {
   margin: 0;
+}
+
+.event-status {
+  color: #6b7280;
+  margin: 0.25rem 0;
 }
 
 .error {
