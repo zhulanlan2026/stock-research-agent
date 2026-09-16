@@ -7,6 +7,8 @@ from xtquant_collector.config.settings import CollectorSettings
 from xtquant_collector.transport.ingest import IngestClient, WALPump
 from xtquant_collector.wal import WalStore
 from xtquant_collector.xtquant import (
+    FinancialFactFetcher,
+    JsonLinesFinancialFactProvider,
     MarketDataSource,
     QuoteEvent,
     XtQuantAnnouncementProvider,
@@ -26,6 +28,7 @@ class Collector:
         data_source: MarketDataSource | None = None,
         bar_fetcher: XtQuantBarFetcher | None = None,
         news_fetcher: XtQuantNewsFetcher | None = None,
+        financial_fetcher: FinancialFactFetcher | None = None,
     ) -> None:
         self.settings = settings
         self.wal = WalStore(settings.wal_path)
@@ -37,6 +40,13 @@ class Collector:
             news_fetcher
             if news_fetcher is not None
             else XtQuantNewsFetcher(XtQuantAnnouncementProvider())
+        )
+        self.financial_fetcher = (
+            financial_fetcher
+            if financial_fetcher is not None
+            else FinancialFactFetcher(
+                JsonLinesFinancialFactProvider(settings.financial_data_path)
+            )
         )
         self.event_queue: asyncio.Queue[QuoteEvent] = asyncio.Queue()
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -50,6 +60,8 @@ class Collector:
             self._fetch_history_bars(symbols)
         if symbols and self.settings.collect_news_enabled:
             self._fetch_news(symbols)
+        if symbols and self.settings.collect_financial_enabled:
+            self._fetch_financial_facts(symbols)
         self._loop = asyncio.get_running_loop()
         if symbols:
             self.data_source.start(symbols, self._enqueue_event)
@@ -92,6 +104,16 @@ class Collector:
             for event in events:
                 self.wal.append(event.event_id, event.event_type, event.payload)
             logger.info("xtquant news fetched", kind=kind, count=len(events))
+
+    def _fetch_financial_facts(self, symbols: list[str]) -> None:
+        try:
+            events = self.financial_fetcher.fetch(symbols)
+        except Exception:
+            logger.exception("financial fact fetch failed")
+            return
+        for event in events:
+            self.wal.append(event.event_id, event.event_type, event.payload)
+        logger.info("financial facts fetched", count=len(events))
 
     def _enqueue_event(self, event: QuoteEvent) -> None:
         if self._loop is None:

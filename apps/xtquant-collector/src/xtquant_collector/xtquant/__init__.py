@@ -1,3 +1,10 @@
+from xtquant_collector.xtquant.financial import (
+    FinancialFactEvent,
+    FinancialFactFetcher,
+    JsonLinesFinancialFactProvider,
+    RawFinancialFactProvider,
+    normalize_financial_fact,
+)
 from xtquant_collector.xtquant.history import (
     BarEvent,
     XtQuantBarFetcher,
@@ -20,14 +27,19 @@ from xtquant_collector.xtquant.news import (
 
 __all__ = [
     "BarEvent",
+    "FinancialFactEvent",
+    "FinancialFactFetcher",
+    "JsonLinesFinancialFactProvider",
     "MarketDataSource",
     "NewsEvent",
     "QuoteEvent",
+    "RawFinancialFactProvider",
     "RawNewsProvider",
     "XtQuantAnnouncementProvider",
     "XtQuantBarFetcher",
     "XtQuantMarketDataSource",
     "XtQuantNewsFetcher",
+    "normalize_financial_fact",
     "normalize_bar",
     "normalize_news_item",
     "normalize_quote",

@@ -26,6 +26,10 @@ class CollectorSettings(BaseSettings):
     collect_news_enabled: bool = False
     # 新闻/公告类型，逗号分隔，可选 news,announcement。
     collect_news_kinds: str = "announcement"
+    # 是否采集真实财务事实。数据源为本地 JSON Lines 文件。
+    collect_financial_enabled: bool = False
+    # 真实财务事实 JSON Lines 文件路径。
+    financial_data_path: str = "./data/financial-facts.jsonl"
     # 采集器本地持久化缓冲，仅用于行情采集，不替代 PostgreSQL 业务真相源。
     wal_path: str = "./data/collector-local-wal.sqlite"
     poll_interval_seconds: float = 1.0
