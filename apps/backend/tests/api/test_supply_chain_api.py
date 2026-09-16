@@ -32,3 +32,24 @@ async def test_get_supply_chain_graph(db_context: Any) -> None:
         assert "edges" in data
     finally:
         app.dependency_overrides.clear()
+
+
+async def test_create_supply_chain_review(db_context: Any) -> None:
+    app.dependency_overrides[get_session] = db_context.override
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            token = await _login(client, db_context)
+            response = await client.post(
+                "/api/v1/supply-chain/reviews",
+                json={"symbol": "600519.SH"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["target_type"] == "supply_chain_graph"
+        assert data["target_id"] == "600519.SH"
+        assert data["status"] == "REVIEW_REQUIRED"
+    finally:
+        app.dependency_overrides.clear()

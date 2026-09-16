@@ -8,6 +8,9 @@ from stock_research.outbox.publisher import OutboxPublisher
 from stock_research.review.human_review import HumanReviewService
 from stock_research.review.research_sync import apply_research_review_decision
 from stock_research.review.schemas import ReviewDecisionRequest, ReviewResponse
+from stock_research.review.supply_chain_sync import (
+    apply_supply_chain_review_decision,
+)
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
 
@@ -46,6 +49,7 @@ async def decide_review(
         reason_code=body.reason_code,
     )
     await apply_research_review_decision(session, review, body.decision)
+    await apply_supply_chain_review_decision(session, review, body.decision)
     await OutboxPublisher(session).publish(
         aggregate_type="human_review",
         aggregate_id=str(review.id),

@@ -464,6 +464,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/supply-chain/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Supply Chain Review */
+        post: operations["create_supply_chain_review_api_v1_supply_chain_reviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reviews/queue": {
         parameters: {
             query?: never;
@@ -888,6 +905,11 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** SupplyChainReviewRequest */
+        SupplyChainReviewRequest: {
+            /** Symbol */
+            symbol?: string | null;
         };
         /** TaskCreateRequest */
         TaskCreateRequest: {
@@ -1829,6 +1851,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GraphResponse"];
+                };
+            };
+        };
+    };
+    create_supply_chain_review_api_v1_supply_chain_reviews_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupplyChainReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

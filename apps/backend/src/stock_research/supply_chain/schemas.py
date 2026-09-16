@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class GraphEdgeResponse(BaseModel):
@@ -10,3 +10,7 @@ class GraphEdgeResponse(BaseModel):
 class GraphResponse(BaseModel):
     nodes: list[str]
     edges: list[GraphEdgeResponse]
+
+
+class SupplyChainReviewRequest(BaseModel):
+    symbol: str | None = Field(default=None, max_length=32)

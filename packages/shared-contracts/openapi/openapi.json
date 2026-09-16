@@ -1313,6 +1313,52 @@
         ]
       }
     },
+    "/api/v1/supply-chain/reviews": {
+      "post": {
+        "tags": [
+          "supply-chain"
+        ],
+        "summary": "Create Supply Chain Review",
+        "operationId": "create_supply_chain_review_api_v1_supply_chain_reviews_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplyChainReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/reviews/queue": {
       "get": {
         "tags": [
@@ -2542,6 +2588,24 @@
           "created_at"
         ],
         "title": "ReviewResponse"
+      },
+      "SupplyChainReviewRequest": {
+        "properties": {
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          }
+        },
+        "type": "object",
+        "title": "SupplyChainReviewRequest"
       },
       "TaskCreateRequest": {
         "properties": {
