@@ -49,6 +49,13 @@ async def run_research_task(task_id: uuid.UUID) -> None:
         logger.exception("research task runner failed", task_id=str(task_id))
 
 
+async def resume_research_task(task_id: uuid.UUID) -> None:
+    try:
+        await _run_research_task(task_id, resume=True)
+    except Exception:
+        logger.exception("research task resume failed", task_id=str(task_id))
+
+
 class _CheckpointObserver:
     def __init__(
         self,
@@ -67,11 +74,11 @@ class _CheckpointObserver:
             task_id=self._task_id,
             checkpoint_id=f"{self._task_id}:{name}",
             node_id=name,
-            state=state,
+            state=_jsonable(state),
         )
 
 
-async def _run_research_task(task_id: uuid.UUID) -> None:
+async def _run_research_task(task_id: uuid.UUID, *, resume: bool = False) -> None:
     settings = get_settings()
     deepseek_client: DeepSeekClient | None = None
     redis_client: Any | None = None
@@ -124,6 +131,26 @@ async def _run_research_task(task_id: uuid.UUID) -> None:
                 task_id=str(task.id),
             )
 
+            restored_state: dict[str, Any] | None = None
+            if resume:
+                checkpoints = await memory_service.list_checkpoints(str(task.id))
+                if checkpoints:
+                    latest = checkpoints[-1]
+                    restored_state = await memory_service.load_checkpoint(
+                        tenant_id=str(task.tenant_id),
+                        task_id=str(task.id),
+                        checkpoint_id=latest["checkpoint_id"],
+                    )
+                    await store.append_event(
+                        task_id,
+                        "checkpoint.restored",
+                        stage="memory",
+                        payload={
+                            "checkpoint_id": latest["checkpoint_id"],
+                            "node_id": latest["node_id"],
+                        },
+                    )
+
             try:
                 react_observer = None
                 if model_gateway is not None:
@@ -164,12 +191,18 @@ async def _run_research_task(task_id: uuid.UUID) -> None:
                     payload={"modules": list(executed)},
                 )
 
+                restored_context = _restored_context(restored_state)
+                restored_context_state = _restored_context_state(restored_state)
                 context = AgentContext(
                     task_id=str(task.id),
-                    symbol=task.symbol,
-                    mode=task.mode,
+                    symbol=str(restored_context.get("symbol") or task.symbol),
+                    mode=str(restored_context.get("mode") or task.mode),
                     as_of=task.as_of or datetime.now(timezone.utc),
-                    purpose=task.question,
+                    purpose=(
+                        str(restored_context.get("purpose"))
+                        if restored_context.get("purpose") is not None
+                        else task.question
+                    ),
                     tenant_id=str(task.tenant_id),
                     user_id=str(task.user_id),
                     scopes=frozenset({"research.standard.execute"}),
@@ -180,6 +213,7 @@ async def _run_research_task(task_id: uuid.UUID) -> None:
                         "news_limit": 20,
                         "risk_period": "1d",
                         "risk_limit": 252,
+                        **restored_context_state,
                     },
                 )
                 result = await orchestrator.run(context, selected)
@@ -333,6 +367,19 @@ def _build_cycle_service(settings: Any) -> CycleAnalysisService:
         window=settings.technical_lstm_window,
     )
     return CycleAnalysisService(lstm_predictor=predictor)
+
+
+def _restored_context(state: dict[str, Any] | None) -> dict[str, Any]:
+    if state is None:
+        return {}
+    context = state.get("context")
+    return context if isinstance(context, dict) else {}
+
+
+def _restored_context_state(state: dict[str, Any] | None) -> dict[str, Any]:
+    context = _restored_context(state)
+    value = context.get("state")
+    return value if isinstance(value, dict) else {}
 
 
 def _build_task_version_payload(

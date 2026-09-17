@@ -263,6 +263,19 @@ def _all_agents(
     ]
 
 
+def test_restored_context_helpers_extract_structured_state() -> None:
+    state = {
+        "context": {
+            "symbol": "600519.SH",
+            "mode": "standard",
+            "state": {"market_limit": 30},
+        }
+    }
+
+    assert runner._restored_context(state)["symbol"] == "600519.SH"
+    assert runner._restored_context_state(state) == {"market_limit": 30}
+
+
 def _core_agents(
     _factory: Any,
     _model_gateway: Any | None = None,

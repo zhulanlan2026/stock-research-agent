@@ -77,6 +77,10 @@ async def test_context_memory_service_recovers_from_postgresql(
         )
         await session.commit()
 
+        checkpoints = await service.list_checkpoints(str(task.id))
+        assert len(checkpoints) == 1
+        assert checkpoints[0]["node_id"] == "research"
+
         cached = await service.load_checkpoint(
             tenant_id=str(db_context.tenant_id),
             task_id=str(task.id),

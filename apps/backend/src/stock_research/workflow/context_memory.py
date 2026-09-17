@@ -132,3 +132,16 @@ class ContextMemoryService:
                 state=state,
             )
         return state
+
+    async def list_checkpoints(self, task_id: str) -> list[dict[str, Any]]:
+        rows = await CheckpointStore(self.session).list_for_task(
+            uuid.UUID(task_id)
+        )
+        return [
+            {
+                "checkpoint_id": row.checkpoint_id,
+                "node_id": row.node_id,
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in rows
+        ]

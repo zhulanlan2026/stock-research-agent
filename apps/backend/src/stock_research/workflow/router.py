@@ -14,7 +14,7 @@ from stock_research.iam.dependencies import require_permission
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session, get_session_factory
 from stock_research.workflow.comprehensive_report import ComprehensiveReportService
-from stock_research.workflow.runner import run_research_task
+from stock_research.workflow.runner import resume_research_task, run_research_task
 from stock_research.workflow.schemas import (
     ComprehensiveReportResponse,
     ReportRequest,
@@ -122,6 +122,40 @@ async def get_task(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"code": "TASK_NOT_FOUND", "message": "任务不存在"},
         )
+    return TaskResponse.model_validate(task)
+
+
+@router.post(
+    "/tasks/{task_id}/resume",
+    response_model=TaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def resume_task(
+    task_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> TaskResponse:
+    store = WorkflowEventStore(session)
+    task = await store.get_task(task_id)
+    if task is None or task.tenant_id != current_user.tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "TASK_NOT_FOUND", "message": "任务不存在"},
+        )
+    if task.status not in {"failed", "running"}:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "TASK_NOT_RESUMABLE",
+                "message": f"当前状态 {task.status} 不允许恢复",
+            },
+        )
+
+    await store.update_task_status(task_id, "queued")
+    await session.commit()
+    background_tasks.add_task(resume_research_task, task.id)
+    task.status = "queued"
     return TaskResponse.model_validate(task)
 
 
