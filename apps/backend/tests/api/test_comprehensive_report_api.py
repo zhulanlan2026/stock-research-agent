@@ -44,6 +44,7 @@ async def test_generate_comprehensive_report(db_context: Any) -> None:
             "供应链",
             "新闻",
             "风险",
+            "RAG 证据",
             "证据强度",
         }.issubset(titles)
         professional = next(
@@ -51,5 +52,10 @@ async def test_generate_comprehensive_report(db_context: Any) -> None:
         )
         assert "risk_points" in professional["data"]
         assert "dupont" in professional["data"]
+        rag = next(
+            section for section in data["sections"] if section["title"] == "RAG 证据"
+        )
+        assert "graph_evidence" in rag["data"]
+        assert "agentic_rag" in rag["data"]
     finally:
         app.dependency_overrides.clear()

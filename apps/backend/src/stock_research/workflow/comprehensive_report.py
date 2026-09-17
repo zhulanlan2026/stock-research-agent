@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+import structlog
+
 from stock_research.agents.engine_agents import build_research_agents
 from stock_research.agents.orchestrator import AgentOrchestrator
 from stock_research.agents.protocol import AgentContext
@@ -18,11 +20,17 @@ from stock_research.market.cycle import CycleAnalysisService
 from stock_research.market.torch_lstm import TorchLstmCyclePredictor
 from stock_research.model_gateway.deepseek import DeepSeekClient
 from stock_research.model_gateway.gateway import ModelGateway
+from stock_research.retrieval.agentic_rag import AgenticRagService
+from stock_research.retrieval.graph_rag import GraphRagRetriever
 from stock_research.services.evidence_strength import EvidenceStrengthService
+from stock_research.supply_chain.alias import OrganizationAliasService
+from stock_research.supply_chain.neo4j_client import Neo4jPublisher
 from stock_research.workflow.schemas import (
     ComprehensiveReportResponse,
     ReportSectionResponse,
 )
+
+logger = structlog.get_logger(__name__)
 
 
 class ComprehensiveReportService:
@@ -92,6 +100,12 @@ class ComprehensiveReportService:
             symbol=symbol,
             as_of=effective_as_of,
         )
+        rag_data = await self._rag_evidence(
+            factory=session_factory,
+            symbol=symbol,
+            as_of=effective_as_of,
+            tenant_id=tenant_id,
+        )
 
         return ComprehensiveReportResponse(
             symbol=report.symbol,
@@ -110,6 +124,10 @@ class ComprehensiveReportService:
                 ReportSectionResponse(
                     title="专业财务",
                     data=professional_data,
+                ),
+                ReportSectionResponse(
+                    title="RAG 证据",
+                    data=rag_data,
                 ),
                 ReportSectionResponse(
                     title="证据强度",
@@ -159,6 +177,72 @@ class ComprehensiveReportService:
                 as_of,
             )
         return professional_payload(snapshot)
+
+    async def _rag_evidence(
+        self,
+        *,
+        factory: Any,
+        symbol: str,
+        as_of: datetime,
+        tenant_id: str | None,
+    ) -> dict[str, Any]:
+        graph_evidence: list[dict[str, object]] = []
+        evidence_ids: list[str] = []
+        try:
+            tenant_uuid = uuid.UUID(tenant_id) if tenant_id else None
+            async with factory() as session:
+                alias = await OrganizationAliasService(session).resolve(symbol)
+                if tenant_uuid is not None:
+                    evidence = await EvidenceClaimDraftStore(session).list_evidence_by_symbol(
+                        symbol,
+                        tenant_id=tenant_uuid,
+                        as_of=as_of,
+                    )
+                    evidence_ids = [str(item.id) for item in evidence]
+
+            settings = get_settings()
+            publisher = Neo4jPublisher(
+                settings.neo4j_uri,
+                settings.neo4j_user,
+                settings.neo4j_password,
+            )
+            try:
+                graph = publisher.list_graph()
+                query = alias or symbol
+                graph_evidence = [
+                    {
+                        "source": item.source,
+                        "predicate": item.predicate,
+                        "target": item.target,
+                        "score": item.score,
+                    }
+                    for item in GraphRagRetriever(graph).retrieve(query)
+                ]
+            finally:
+                publisher.close()
+        except Exception:
+            logger.exception("rag evidence collection failed")
+
+        agentic_result = AgenticRagService().retrieve(
+            query=symbol,
+            symbol=symbol,
+            as_of=as_of,
+            retriever=lambda _query: evidence_ids,
+            max_rounds=3,
+        )
+        return {
+            "graph_evidence": graph_evidence,
+            "agentic_rag": {
+                "evidence_ids": list(agentic_result.evidence_ids),
+                "steps": [
+                    {
+                        "query": step.query,
+                        "evidence_ids": list(step.evidence_ids),
+                    }
+                    for step in agentic_result.steps
+                ],
+            },
+        }
 
     def _build_model_gateway(self, settings: Any) -> ModelGateway | None:
         if not settings.llm_api_key:
