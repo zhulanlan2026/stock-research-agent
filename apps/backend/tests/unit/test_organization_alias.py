@@ -15,3 +15,14 @@ async def test_organization_alias_resolves_to_canonical_name(db_context: Any) ->
 
         assert await service.resolve("贵州茅台") == "贵州茅台酒股份有限公司"
         assert await service.resolve("不存在") is None
+
+
+async def test_symbol_alias_maps_known_stock_to_organization(
+    db_context: Any,
+) -> None:
+    async with db_context.factory() as session:
+        service = OrganizationAliasService(session)
+
+        assert await service.resolve_symbol("600519.SH") == "贵州茅台"
+        assert await service.resolve_symbol("000001.SZ") == "平安银行"
+        assert await service.resolve_symbol("UNKNOWN.SH") == "UNKNOWN.SH"

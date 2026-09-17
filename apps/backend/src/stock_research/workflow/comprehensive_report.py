@@ -191,7 +191,7 @@ class ComprehensiveReportService:
         try:
             tenant_uuid = uuid.UUID(tenant_id) if tenant_id else None
             async with factory() as session:
-                alias = await OrganizationAliasService(session).resolve(symbol)
+                alias = await OrganizationAliasService(session).resolve_symbol(symbol)
                 if tenant_uuid is not None:
                     evidence = await EvidenceClaimDraftStore(session).list_evidence_by_symbol(
                         symbol,

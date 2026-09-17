@@ -7,6 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.stores.models.supply_chain import OrganizationAlias
 
+SYMBOL_TO_ORG = {
+    "600519.SH": "贵州茅台",
+    "000001.SZ": "平安银行",
+    "000858.SZ": "五粮液",
+}
+
 
 class OrganizationAliasService:
     def __init__(self, session: AsyncSession) -> None:
@@ -36,3 +42,9 @@ class OrganizationAliasService:
             )
         )
         return result.scalar_one_or_none()
+
+    async def resolve_symbol(self, symbol: str) -> str:
+        alias = await self.resolve(symbol)
+        if alias is not None:
+            return alias
+        return SYMBOL_TO_ORG.get(symbol, symbol)
