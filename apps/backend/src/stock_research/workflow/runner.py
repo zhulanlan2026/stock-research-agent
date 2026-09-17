@@ -21,6 +21,10 @@ from stock_research.model_gateway.gateway import ModelGateway
 from stock_research.outbox.publisher import OutboxPublisher
 from stock_research.review.human_review import HumanReviewService
 from stock_research.stores.session import session_factory
+from stock_research.workflow.context_memory import (
+    ContextMemoryCache,
+    ContextMemoryService,
+)
 from stock_research.workflow.store import WorkflowEventStore
 
 logger = structlog.get_logger(__name__)
@@ -45,9 +49,32 @@ async def run_research_task(task_id: uuid.UUID) -> None:
         logger.exception("research task runner failed", task_id=str(task_id))
 
 
+class _CheckpointObserver:
+    def __init__(
+        self,
+        memory: ContextMemoryService,
+        *,
+        tenant_id: str,
+        task_id: str,
+    ) -> None:
+        self._memory = memory
+        self._tenant_id = tenant_id
+        self._task_id = task_id
+
+    async def after_node(self, name: str, state: dict[str, Any]) -> None:
+        await self._memory.save_checkpoint(
+            tenant_id=self._tenant_id,
+            task_id=self._task_id,
+            checkpoint_id=f"{self._task_id}:{name}",
+            node_id=name,
+            state=state,
+        )
+
+
 async def _run_research_task(task_id: uuid.UUID) -> None:
     settings = get_settings()
     deepseek_client: DeepSeekClient | None = None
+    redis_client: Any | None = None
     model_gateway: ModelGateway | None = None
     if settings.llm_api_key:
         deepseek_client = DeepSeekClient(
@@ -72,6 +99,30 @@ async def _run_research_task(task_id: uuid.UUID) -> None:
                 payload={"message": "研究任务开始", "task_id": str(task_id)},
             )
             await session.commit()
+
+            memory_service = ContextMemoryService(session, None)
+            try:
+                import redis.asyncio as redis
+
+                redis_client = redis.from_url(  # type: ignore[no-untyped-call]
+                    settings.redis_url,
+                    socket_timeout=1,
+                    decode_responses=False,
+                )
+                memory_service = ContextMemoryService(
+                    session,
+                    ContextMemoryCache(redis_client),
+                )
+            except Exception:
+                logger.warning(
+                    "context memory redis unavailable; using postgresql only",
+                    task_id=str(task_id),
+                )
+            memory_observer = _CheckpointObserver(
+                memory_service,
+                tenant_id=str(task.tenant_id),
+                task_id=str(task.id),
+            )
 
             try:
                 react_observer = None
@@ -98,7 +149,11 @@ async def _run_research_task(task_id: uuid.UUID) -> None:
                         cycle_service=cycle_service,
                     )
                 )
-                orchestrator = AgentOrchestrator(registry, prefer_langgraph=True)
+                orchestrator = AgentOrchestrator(
+                    registry,
+                    prefer_langgraph=True,
+                    observer=memory_observer,
+                )
                 plan = registry.execution_plan(selected)
                 executed = plan.flat
 
@@ -263,6 +318,8 @@ async def _run_research_task(task_id: uuid.UUID) -> None:
     finally:
         if deepseek_client is not None:
             await deepseek_client.aclose()
+        if redis_client is not None:
+            await redis_client.aclose()
 
 
 def _build_cycle_service(settings: Any) -> CycleAnalysisService:

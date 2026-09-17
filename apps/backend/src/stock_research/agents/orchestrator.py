@@ -57,8 +57,16 @@ class AgentExecutor(Protocol):
         ...
 
 
+class NodeObserver(Protocol):
+    async def after_node(self, name: str, state: dict[str, Any]) -> None:
+        ...
+
+
 class ParallelAgentExecutor:
     """无 LangGraph 时的确定性并行执行器。"""
+
+    def __init__(self, observer: NodeObserver | None = None) -> None:
+        self._observer = observer
 
     async def execute(
         self,
@@ -82,6 +90,8 @@ class ParallelAgentExecutor:
                 state[name] = result.data
                 state["results"] = dict(results)
                 warnings.extend(result.warnings)
+                if self._observer is not None:
+                    await self._observer.after_node(name, dict(state))
 
         return OrchestrationResult(
             results=results,
@@ -124,6 +134,9 @@ class ParallelAgentExecutor:
 
 class LangGraphAgentExecutor:
     """LangGraph DAG 执行器；未安装 LangGraph 时由上层回退。"""
+
+    def __init__(self, observer: NodeObserver | None = None) -> None:
+        self._observer = observer
 
     async def execute(
         self,
@@ -186,6 +199,16 @@ class LangGraphAgentExecutor:
                     result,
                     latency_ms=int((time.perf_counter() - started) * 1000),
                 )
+            if self._observer is not None:
+                next_state = dict(state)
+                merged_results = dict(next_state.get("results", {}))
+                merged_results[name] = result
+                next_state["results"] = merged_results
+                next_state["warnings"] = (
+                    *next_state.get("warnings", ()),
+                    *result.warnings,
+                )
+                await self._observer.after_node(name, next_state)
             return {
                 "results": {name: result},
                 "warnings": result.warnings,
@@ -219,10 +242,14 @@ class AgentOrchestrator:
         registry: AgentRegistry,
         *,
         executor: AgentExecutor | None = None,
+        observer: NodeObserver | None = None,
         prefer_langgraph: bool = True,
     ) -> None:
         self.registry = registry
-        self.executor = executor or self._default_executor(prefer_langgraph)
+        self.executor = executor or self._default_executor(
+            prefer_langgraph,
+            observer=observer,
+        )
 
     async def run(
         self,
@@ -233,11 +260,15 @@ class AgentOrchestrator:
         return await self.executor.execute(self.registry, context, plan)
 
     @staticmethod
-    def _default_executor(prefer_langgraph: bool) -> AgentExecutor:
+    def _default_executor(
+        prefer_langgraph: bool,
+        *,
+        observer: NodeObserver | None = None,
+    ) -> AgentExecutor:
         if prefer_langgraph:
             try:
                 _load_langgraph()
             except RuntimeError:
-                return ParallelAgentExecutor()
-            return LangGraphAgentExecutor()
-        return ParallelAgentExecutor()
+                return ParallelAgentExecutor(observer=observer)
+            return LangGraphAgentExecutor(observer=observer)
+        return ParallelAgentExecutor(observer=observer)

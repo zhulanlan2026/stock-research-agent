@@ -77,10 +77,12 @@ class _FakeOrchestrator:
         registry: Any,
         *,
         prefer_langgraph: bool,
+        observer: Any | None = None,
         review_decision: str | None = None,
     ) -> None:
         self.registry = registry
         self.prefer_langgraph = prefer_langgraph
+        self.observer = observer
         self.review_decision = review_decision
 
     async def run(self, context: Any, selected: tuple[str, ...]) -> OrchestrationResult:
@@ -184,9 +186,10 @@ async def test_allowed_research_task_enqueues_outbox(monkeypatch: Any) -> None:
     monkeypatch.setattr(
         runner,
         "AgentOrchestrator",
-        lambda registry, *, prefer_langgraph: _FakeOrchestrator(
+        lambda registry, *, prefer_langgraph, observer=None: _FakeOrchestrator(
             registry,
             prefer_langgraph=prefer_langgraph,
+            observer=observer,
             review_decision="APPROVED",
         ),
     )
@@ -210,9 +213,10 @@ async def test_review_required_task_creates_human_review(monkeypatch: Any) -> No
     monkeypatch.setattr(
         runner,
         "AgentOrchestrator",
-        lambda registry, *, prefer_langgraph: _FakeOrchestrator(
+        lambda registry, *, prefer_langgraph, observer=None: _FakeOrchestrator(
             registry,
             prefer_langgraph=prefer_langgraph,
+            observer=observer,
             review_decision="NEEDS_REVISION",
         ),
     )
