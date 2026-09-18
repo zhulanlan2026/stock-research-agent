@@ -1235,6 +1235,54 @@
         }
       }
     },
+    "/api/v1/research/tasks/{task_id}/resume": {
+      "post": {
+        "tags": [
+          "workflow"
+        ],
+        "summary": "Resume Task",
+        "operationId": "resume_task_api_v1_research_tasks__task_id__resume_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/research/tasks/{task_id}/versions": {
       "get": {
         "tags": [
