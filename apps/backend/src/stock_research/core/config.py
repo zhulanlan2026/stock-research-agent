@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     refresh_cookie_secure: bool = False
     market_consume_interval_seconds: float = 1.0
     outbox_dispatch_interval_seconds: float = 1.0
+    auto_resume_poll_interval_seconds: float = 60.0
+    auto_resume_stale_tasks_seconds: int = 600
     technical_cycle_horizon: int = 5
     technical_lstm_enabled: bool = False
     technical_lstm_seed: int = 0

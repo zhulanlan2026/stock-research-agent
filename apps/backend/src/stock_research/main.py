@@ -1,10 +1,12 @@
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 
 import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from sqlalchemy import select
 from starlette.exceptions import HTTPException
 
 from stock_research.admin.router import router as admin_router
@@ -30,10 +32,12 @@ from stock_research.observability.router import router as observability_router
 from stock_research.outbox.dispatcher import OutboxDispatcher
 from stock_research.outbox.handlers import build_default_registry
 from stock_research.review.router import router as review_router
+from stock_research.stores.models.workflow import Task
 from stock_research.stores.session import session_factory
 from stock_research.supply_chain.router import router as supply_chain_router
 from stock_research.user_settings.router import router as user_settings_router
 from stock_research.workflow.router import router as workflow_router
+from stock_research.workflow.runner import resume_research_task
 
 logger = structlog.get_logger(__name__)
 
@@ -48,13 +52,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     financial_fact_task = asyncio.create_task(
         _consume_financial_fact_loop(settings.market_consume_interval_seconds)
     )
+    auto_resume_task = asyncio.create_task(
+        _auto_resume_stale_tasks_loop(
+            settings.auto_resume_poll_interval_seconds,
+            settings.auto_resume_stale_tasks_seconds,
+        )
+    )
     outbox_task = asyncio.create_task(
         _dispatch_outbox_loop(settings.outbox_dispatch_interval_seconds)
     )
     try:
         yield
     finally:
-        for task in (consume_task, financial_fact_task, outbox_task):
+        for task in (consume_task, financial_fact_task, auto_resume_task, outbox_task):
             task.cancel()
             try:
                 await task
@@ -79,6 +89,30 @@ async def _consume_financial_fact_loop(interval_seconds: float) -> None:
                 await FinancialFactConsumer(session).consume_pending(limit=100)
         except Exception:
             logger.exception("financial fact inbox consume failed")
+        await asyncio.sleep(interval_seconds)
+
+
+async def _auto_resume_stale_tasks_loop(
+    interval_seconds: float,
+    stale_after_seconds: int,
+) -> None:
+    while True:
+        try:
+            cutoff = datetime.now(timezone.utc) - timedelta(
+                seconds=stale_after_seconds
+            )
+            async with session_factory() as session:
+                result = await session.execute(
+                    select(Task).where(
+                        Task.status == "running",
+                        Task.updated_at < cutoff,
+                    )
+                )
+                tasks = list(result.scalars().all())
+                for task in tasks:
+                    asyncio.create_task(resume_research_task(task.id))
+        except Exception:
+            logger.exception("auto resume stale tasks failed")
         await asyncio.sleep(interval_seconds)
 
 
