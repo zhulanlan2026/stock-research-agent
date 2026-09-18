@@ -15,6 +15,7 @@ from stock_research.documents.draft import EvidenceClaimDraftStore
 from stock_research.fundamental.professional import (
     ProfessionalFinancialEngine,
     professional_payload,
+    professional_summary,
 )
 from stock_research.market.cycle import CycleAnalysisService
 from stock_research.market.torch_lstm import TorchLstmCyclePredictor
@@ -180,7 +181,9 @@ class ComprehensiveReportService:
                 symbol,
                 as_of,
             )
-        return professional_payload(snapshot)
+        payload = professional_payload(snapshot)
+        payload["conclusion"] = professional_summary(snapshot)
+        return payload
 
     async def _rag_evidence(
         self,
@@ -241,9 +244,15 @@ class ComprehensiveReportService:
             retriever=standard_rag.retrieve,
             max_rounds=3,
         )
+        rag_conclusion = (
+            f"标准RAG命中{len(standard_rag.retrieve(symbol))}条证据，"
+            f"Graph RAG命中{len(graph_evidence)}条关系，"
+            f"Agentic RAG共{len(agentic_result.evidence_ids)}条去重证据。"
+        )
         return {
             "graph_evidence": graph_evidence,
             "standard_rag_evidence_ids": standard_rag.retrieve(symbol),
+            "conclusion": rag_conclusion,
             "agentic_rag": {
                 "evidence_ids": list(agentic_result.evidence_ids),
                 "steps": [

@@ -95,7 +95,7 @@ class StructuredReportAgent:
             sections=(
                 StructuredReportSection(
                     "概览",
-                    {
+                    _with_conclusion({
                         "symbol": context.symbol,
                         "as_of": research.as_of.isoformat(),
                         "coverage": research.coverage,
@@ -105,19 +105,25 @@ class StructuredReportAgent:
                             "risk",
                             "risk_level",
                         ),
-                    },
+                    }, "概览"),
                 ),
                 StructuredReportSection(
                     "财务",
-                    research.module_summaries.get("fundamental", {}),
+                    _with_conclusion(
+                        research.module_summaries.get("fundamental", {}),
+                        "财务",
+                    ),
                 ),
                 StructuredReportSection(
                     "技术",
-                    research.module_summaries.get("technical", {}),
+                    _with_conclusion(
+                        research.module_summaries.get("technical", {}),
+                        "技术",
+                    ),
                 ),
                 StructuredReportSection(
                     "周期分析",
-                    {
+                    _with_conclusion({
                         "fft_periods": _nested(
                             research.module_summaries,
                             "technical",
@@ -140,23 +146,35 @@ class StructuredReportAgent:
                             "technical",
                             "lstm_latency_ms",
                         ),
-                    },
+                    }, "周期分析"),
                 ),
                 StructuredReportSection(
                     "行情",
-                    research.module_summaries.get("market", {}),
+                    _with_conclusion(
+                        research.module_summaries.get("market", {}),
+                        "行情",
+                    ),
                 ),
                 StructuredReportSection(
                     "供应链",
-                    research.module_summaries.get("supply_chain", {}),
+                    _with_conclusion(
+                        research.module_summaries.get("supply_chain", {}),
+                        "供应链",
+                    ),
                 ),
                 StructuredReportSection(
                     "新闻",
-                    research.module_summaries.get("news", {}),
+                    _with_conclusion(
+                        research.module_summaries.get("news", {}),
+                        "新闻",
+                    ),
                 ),
                 StructuredReportSection(
                     "风险",
-                    research.module_summaries.get("risk", {}),
+                    _with_conclusion(
+                        research.module_summaries.get("risk", {}),
+                        "风险",
+                    ),
                 ),
                 StructuredReportSection(
                     "版本信息",
@@ -340,6 +358,106 @@ def _nested(
     key: str,
 ) -> Any:
     return data.get(section, {}).get(key)
+
+
+def _with_conclusion(data: dict[str, Any], title: str) -> dict[str, Any]:
+    return {**data, "conclusion": _section_conclusion(title, data)}
+
+
+def _section_conclusion(title: str, data: dict[str, Any]) -> str:
+    if title == "概览":
+        risk_level = data.get("risk_level")
+        coverage = data.get("coverage")
+        risk_text = _risk_zh(risk_level)
+        coverage_text = _percent_text(coverage)
+        return f"综合风险等级为{risk_text}，数据覆盖度约{coverage_text}。"
+
+    if title == "财务":
+        roe = data.get("roe")
+        net_margin = data.get("net_margin")
+        parts = []
+        if roe is not None:
+            parts.append(f"ROE约{_percent_text(roe)}")
+        if net_margin is not None:
+            parts.append(f"净利率约{_percent_text(net_margin)}")
+        if parts:
+            return "财务表现：" + "，".join(parts) + "。"
+        return "当前财务事实覆盖不足，暂无法形成可靠财务结论。"
+
+    if title == "技术":
+        latest_close = data.get("latest_close")
+        rsi = data.get("rsi")
+        macd_dif = data.get("macd_dif")
+        macd_dea = data.get("macd_dea")
+        if latest_close is None and rsi is None:
+            return "当前技术指标数据不足，暂无法形成可靠技术结论。"
+        parts = []
+        if latest_close is not None:
+            parts.append(f"最新收盘价约{latest_close}")
+        if rsi is not None:
+            parts.append(f"RSI约{rsi:.2f}")
+        if macd_dif is not None and macd_dea is not None:
+            if macd_dif > macd_dea:
+                parts.append("MACD处于多头形态")
+            else:
+                parts.append("MACD处于空头或弱势形态")
+        return "技术面：" + "，".join(parts) + "。"
+
+    if title == "周期分析":
+        periods = data.get("fft_periods") or []
+        lstm_available = data.get("lstm_available")
+        if periods:
+            first_period = periods[0].get("period_bars")
+            return (
+                f"价格序列主要周期约为{first_period}根K线，"
+                f"LSTM预测可用性：{bool(lstm_available)}。"
+            )
+        return "当前周期分析样本不足或未启用LSTM。"
+
+    if title == "行情":
+        last_price = data.get("last_price")
+        change_pct = data.get("change_pct")
+        if last_price is None:
+            return "当前行情快照数据不足。"
+        change_text = _percent_text(change_pct) if change_pct is not None else "未知"
+        return f"最新价约{last_price}，涨跌幅约{change_text}。"
+
+    if title == "供应链":
+        nodes = data.get("nodes") or []
+        edges = data.get("edges") or []
+        if not edges:
+            return "当前供应链图谱证据不足，暂无法形成供应链结论。"
+        return f"供应链图谱包含{len(nodes)}个节点、{len(edges)}条关系边。"
+
+    if title == "新闻":
+        item_count = data.get("item_count")
+        if item_count is None:
+            return "当前没有足够的公告或新闻事件。"
+        return f"近期共读取到{item_count}条公告/新闻事件。"
+
+    if title == "风险":
+        risk_level = data.get("risk_level")
+        risk_score = data.get("risk_score")
+        return f"风险等级为{_risk_zh(risk_level)}，风险评分约{risk_score}。"
+
+    return "该维度暂无额外中文结论。"
+
+
+def _risk_zh(value: Any) -> str:
+    return {
+        "LOW": "低风险",
+        "MEDIUM": "中等风险",
+        "HIGH": "高风险",
+        "UNKNOWN": "风险未知",
+    }.get(str(value), "风险未知")
+
+
+def _percent_text(value: Any) -> str:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "未知"
+    return f"{number:.1%}"
 
 
 def _react_report_prompt(report: StructuredReportResult) -> str:

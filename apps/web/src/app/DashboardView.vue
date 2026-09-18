@@ -270,6 +270,7 @@ function selectTab(tab: string): void {
       <div v-else-if="activeSection?.title === '专业财务'" class="report-section">
         <h3>专业财务</h3>
         <p class="section-description">{{ sectionDescription(activeSection.title) }}</p>
+        <p v-if="activeData.conclusion" class="section-conclusion">{{ activeData.conclusion }}</p>
         <div class="metric-grid">
           <dl v-for="(value, key) in displayMap(activeData.metrics)" :key="key">
             <dt>{{ key }}</dt>
@@ -301,6 +302,7 @@ function selectTab(tab: string): void {
       <div v-else-if="activeSection?.title === 'RAG 证据'" class="report-section">
         <h3>RAG 证据</h3>
         <p class="section-description">{{ sectionDescription(activeSection.title) }}</p>
+        <p v-if="activeData.conclusion" class="section-conclusion">{{ activeData.conclusion }}</p>
         <h4>Graph 证据</h4>
         <table v-if="graphEvidence(activeData.graph_evidence).length > 0" class="data-table">
           <thead>
@@ -335,6 +337,7 @@ function selectTab(tab: string): void {
       <div v-else-if="activeSection" class="report-section">
         <h3>{{ activeSection.title }}</h3>
         <p class="section-description">{{ sectionDescription(activeSection.title) }}</p>
+        <p v-if="activeData.conclusion" class="section-conclusion">{{ activeData.conclusion }}</p>
         <pre>{{ JSON.stringify(activeSection.data, null, 2) }}</pre>
       </div>
     </div>
@@ -473,6 +476,15 @@ function selectTab(tab: string): void {
 
 .section-description {
   color: #4b5563;
+  margin: 0.5rem 0 1rem;
+}
+
+.section-conclusion {
+  padding: 0.75rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  color: #065f46;
   margin: 0.5rem 0 1rem;
 }
 

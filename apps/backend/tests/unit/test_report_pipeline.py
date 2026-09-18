@@ -76,6 +76,9 @@ async def test_report_agent_renders_research_summary() -> None:
         "版本信息",
         "免责声明",
     ]
+    financial = next(section for section in report.sections if section.title == "财务")
+    assert "conclusion" in financial.data
+    assert financial.data["conclusion"]
 
 
 async def test_review_agent_requires_revision_for_high_risk() -> None:
