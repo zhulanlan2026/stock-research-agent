@@ -56,6 +56,7 @@ async def test_generate_comprehensive_report(db_context: Any) -> None:
             section for section in data["sections"] if section["title"] == "RAG 证据"
         )
         assert "graph_evidence" in rag["data"]
+        assert "standard_rag_evidence_ids" in rag["data"]
         assert "agentic_rag" in rag["data"]
     finally:
         app.dependency_overrides.clear()

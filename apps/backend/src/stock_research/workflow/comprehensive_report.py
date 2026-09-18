@@ -22,6 +22,10 @@ from stock_research.model_gateway.deepseek import DeepSeekClient
 from stock_research.model_gateway.gateway import ModelGateway
 from stock_research.retrieval.agentic_rag import AgenticRagService
 from stock_research.retrieval.graph_rag import GraphRagRetriever
+from stock_research.retrieval.standard_rag import (
+    StandardRagEvidence,
+    StandardRagService,
+)
 from stock_research.services.evidence_strength import EvidenceStrengthService
 from stock_research.supply_chain.alias import OrganizationAliasService
 from stock_research.supply_chain.neo4j_client import Neo4jPublisher
@@ -187,7 +191,7 @@ class ComprehensiveReportService:
         tenant_id: str | None,
     ) -> dict[str, Any]:
         graph_evidence: list[dict[str, object]] = []
-        evidence_ids: list[str] = []
+        standard_evidence: list[StandardRagEvidence] = []
         try:
             tenant_uuid = uuid.UUID(tenant_id) if tenant_id else None
             async with factory() as session:
@@ -198,7 +202,13 @@ class ComprehensiveReportService:
                         tenant_id=tenant_uuid,
                         as_of=as_of,
                     )
-                    evidence_ids = [str(item.id) for item in evidence]
+                    standard_evidence = [
+                        StandardRagEvidence(
+                            evidence_id=str(item.id),
+                            content=item.content,
+                        )
+                        for item in evidence
+                    ]
 
             settings = get_settings()
             publisher = Neo4jPublisher(
@@ -223,15 +233,17 @@ class ComprehensiveReportService:
         except Exception:
             logger.exception("rag evidence collection failed")
 
+        standard_rag = StandardRagService(standard_evidence)
         agentic_result = AgenticRagService().retrieve(
             query=symbol,
             symbol=symbol,
             as_of=as_of,
-            retriever=lambda _query: evidence_ids,
+            retriever=standard_rag.retrieve,
             max_rounds=3,
         )
         return {
             "graph_evidence": graph_evidence,
+            "standard_rag_evidence_ids": standard_rag.retrieve(symbol),
             "agentic_rag": {
                 "evidence_ids": list(agentic_result.evidence_ids),
                 "steps": [
