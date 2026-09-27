@@ -12,9 +12,11 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 COPY pyproject.toml uv.lock ./
 COPY apps/backend /app/apps/backend
+COPY apps/akshare-collector /app/apps/akshare-collector
 COPY apps/xtquant-collector /app/apps/xtquant-collector
 
-RUN uv sync --frozen --no-dev \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
     && if [ "$INSTALL_TORCH" = "true" ]; then \
          uv pip install --python /app/.venv/bin/python "torch>=2.4,<3" --index-url https://download.pytorch.org/whl/cpu; \
        fi \

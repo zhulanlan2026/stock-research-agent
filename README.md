@@ -7,6 +7,7 @@
 
 - `apps/web`：Vue 3 + Vite + TypeScript 前端
 - `apps/backend`：FastAPI + LangGraph 后端
+- `apps/akshare-collector`：AKShare / Tushare 行情采集器，Tushare 日线交叉验证
 - `apps/xtquant-collector`：Windows MiniQMT/XTQuant 采集器
 - `packages/api-types`：OpenAPI 自动生成的 TypeScript SDK
 - `packages/shared-contracts`：跨语言稳定契约（错误码、枚举、SSE Schema、Feature Flag）

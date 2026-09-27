@@ -1,6 +1,7 @@
 [tool.uv.workspace]
 members = [
     "apps/backend",
+    "apps/akshare-collector",
     "apps/xtquant-collector",
 ]
 
@@ -12,7 +13,7 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B", "ASYNC"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["stock_research", "xtquant_collector"]
+known-first-party = ["stock_research", "xtquant_collector", "akshare_collector"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
@@ -33,5 +34,10 @@ exclude = [
 
 [tool.pytest.ini_options]
 addopts = "-ra"
-testpaths = ["apps/backend/tests", "apps/xtquant-collector/tests", "tests"]
+testpaths = [
+    "apps/backend/tests",
+    "apps/akshare-collector/tests",
+    "apps/xtquant-collector/tests",
+    "tests",
+]
 asyncio_mode = "auto"
