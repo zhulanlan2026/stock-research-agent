@@ -107,8 +107,15 @@ class ReActLoop:
         tenant_id: str | None = None,
         user_id: str | None = None,
     ) -> ReActResult:
+        json_instruction = (
+            "你必须只输出一个 JSON 对象，不要输出任何额外文本或 Markdown 代码块。"
+            "如需调用工具，输出："
+            '{"thought": "...", "action": {"skill": "skill_name", "args": {}}}。'
+            "如果已经可以给出最终结论，输出："
+            '{"thought": "...", "final_answer": "..."}。'
+        )
         messages = [
-            ModelMessage(role="system", content=system_prompt),
+            ModelMessage(role="system", content=f"{system_prompt}\n{json_instruction}"),
             ModelMessage(role="user", content=user_prompt),
         ]
         steps: list[ReActStep] = []
