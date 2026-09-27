@@ -107,7 +107,11 @@ async def _run_research_task(task_id: uuid.UUID, *, resume: bool = False) -> Non
             )
             await session.commit()
 
-            memory_service = ContextMemoryService(session, None)
+            memory_service = ContextMemoryService(
+                session,
+                None,
+                session_factory=session_factory,
+            )
             try:
                 import redis.asyncio as redis
 
@@ -119,6 +123,7 @@ async def _run_research_task(task_id: uuid.UUID, *, resume: bool = False) -> Non
                 memory_service = ContextMemoryService(
                     session,
                     ContextMemoryCache(redis_client),
+                    session_factory=session_factory,
                 )
             except Exception:
                 logger.warning(

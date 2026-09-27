@@ -75,9 +75,12 @@ class ContextMemoryService:
         self,
         session: AsyncSession,
         cache: ContextMemoryCache | None,
+        *,
+        session_factory: Any | None = None,
     ) -> None:
         self.session = session
         self.cache = cache
+        self._session_factory = session_factory
 
     async def save_checkpoint(
         self,
@@ -89,13 +92,23 @@ class ContextMemoryService:
         state: dict[str, Any],
     ) -> None:
         task_uuid = uuid.UUID(task_id)
-        await CheckpointStore(self.session).save(
-            task_id=task_uuid,
-            checkpoint_id=checkpoint_id,
-            node_id=node_id,
-            state=state,
-        )
-        await self.session.flush()
+        if self._session_factory is not None:
+            async with self._session_factory() as session:
+                await CheckpointStore(session).save(
+                    task_id=task_uuid,
+                    checkpoint_id=checkpoint_id,
+                    node_id=node_id,
+                    state=state,
+                )
+                await session.commit()
+        else:
+            await CheckpointStore(self.session).save(
+                task_id=task_uuid,
+                checkpoint_id=checkpoint_id,
+                node_id=node_id,
+                state=state,
+            )
+            await self.session.flush()
         if self.cache is not None:
             await self.cache.set_state(
                 tenant_id=tenant_id,
