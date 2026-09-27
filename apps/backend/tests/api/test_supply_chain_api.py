@@ -53,3 +53,31 @@ async def test_create_supply_chain_review(db_context: Any) -> None:
         assert data["status"] == "REVIEW_REQUIRED"
     finally:
         app.dependency_overrides.clear()
+
+
+async def test_create_supply_chain_contract(db_context: Any) -> None:
+    app.dependency_overrides[get_session] = db_context.override
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            token = await _login(client, db_context)
+            response = await client.post(
+                "/api/v1/supply-chain/contracts",
+                json={
+                    "subject_org": "德福科技",
+                    "object_org": "宁德时代",
+                    "amount": "1000.00",
+                    "currency": "CNY",
+                    "evidence_ids": ["evidence-1"],
+                },
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["subject_org"] == "德福科技"
+        assert data["object_org"] == "宁德时代"
+        assert data["status"] == "DRAFT"
+        assert data["evidence_ids"] == ["evidence-1"]
+    finally:
+        app.dependency_overrides.clear()

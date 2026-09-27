@@ -25,4 +25,8 @@ async def test_symbol_alias_maps_known_stock_to_organization(
 
         assert await service.resolve_symbol("600519.SH") == "贵州茅台"
         assert await service.resolve_symbol("000001.SZ") == "平安银行"
+        assert await service.resolve_symbol("301511.SZ") == "德福科技"
+        assert await service.resolve_symbol("601869.SH") == "长飞光纤"
+        assert await service.resolve_symbol("301183.SZ") == "东田微"
+        assert await service.resolve_symbol("603893.SH") == "瑞芯微"
         assert await service.resolve_symbol("UNKNOWN.SH") == "UNKNOWN.SH"

@@ -9,6 +9,8 @@ RELATION_PATTERNS = (
     (re.compile(r"(.+?)向(.+?)销售"), "sold_to"),
 )
 
+_SENTENCE_SEPARATORS = re.compile(r"[。；;！？\n]+")
+
 
 @dataclass(frozen=True)
 class ExtractedClaim:
@@ -23,14 +25,18 @@ class RuleBasedClaimExtractor:
 
     def extract(self, text: str) -> list[ExtractedClaim]:
         claims: list[ExtractedClaim] = []
-        for pattern, predicate in RELATION_PATTERNS:
-            for match in pattern.finditer(text):
-                claims.append(
-                    ExtractedClaim(
-                        subject=match.group(1).strip(),
-                        predicate=predicate,
-                        object=match.group(2).strip(),
-                        evidence_text=match.group(0),
+        for sentence in _SENTENCE_SEPARATORS.split(text):
+            sentence = sentence.strip()
+            if not sentence:
+                continue
+            for pattern, predicate in RELATION_PATTERNS:
+                for match in pattern.finditer(sentence):
+                    claims.append(
+                        ExtractedClaim(
+                            subject=match.group(1).strip(),
+                            predicate=predicate,
+                            object=match.group(2).strip(),
+                            evidence_text=match.group(0),
+                        )
                     )
-                )
         return claims

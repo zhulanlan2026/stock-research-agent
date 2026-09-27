@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -64,3 +64,16 @@ class OrganizationAlias(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     canonical_name: Mapped[str] = mapped_column(String(200), nullable=False)
     alias: Mapped[str] = mapped_column(String(200), nullable=False)
+
+
+class RiskSnapshot(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "risk_snapshot"
+
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tenant.id"), index=True, nullable=True
+    )
+    symbol: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    initial_risk: Mapped[dict[str, float]] = mapped_column(JSONB, nullable=False)
+    max_steps: Mapped[int] = mapped_column(nullable=False)
+    damping: Mapped[float] = mapped_column(Float, nullable=False)
+    result: Mapped[dict[str, float]] = mapped_column(JSONB, nullable=False)
