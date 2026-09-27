@@ -2,7 +2,11 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 
-from stock_research.fundamental.professional import ProfessionalFinancialEngine
+from stock_research.fundamental.professional import (
+    ProfessionalFinancialEngine,
+    ProfessionalFinancialSnapshot,
+    professional_summary,
+)
 from stock_research.fundamental.schemas import FinancialFactCreate
 from stock_research.fundamental.store import FinancialFactStore
 
@@ -76,3 +80,25 @@ async def test_professional_financial_engine_calculates_growth_and_dupont(
     assert snapshot.ratios["quick_ratio"] == Decimal("1.625")
     assert snapshot.ratios["interest_coverage"] == Decimal("15")
     assert snapshot.risk_points == ()
+
+
+def test_professional_summary_includes_growth_and_risk_points() -> None:
+    snapshot = ProfessionalFinancialSnapshot(
+        symbol="600519.SH",
+        as_of=datetime(2026, 4, 1, tzinfo=timezone.utc),
+        module_version="professional_financial:1.0.0",
+        metrics={},
+        ratios={},
+        growth={"revenue": Decimal("0.2"), "net_income": Decimal("0.25")},
+        dupont={},
+        free_cash_flow=Decimal("220"),
+        risk_points=("利息保障倍数偏低",),
+        coverage=Decimal("1"),
+    )
+
+    text = professional_summary(snapshot)
+
+    assert "营收同比 20.00%" in text
+    assert "净利润同比 25.00%" in text
+    assert "自由现金流 220 元" in text
+    assert "财务风险点 1 项" in text

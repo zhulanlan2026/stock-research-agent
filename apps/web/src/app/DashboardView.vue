@@ -26,7 +26,7 @@ const mode = ref('standard');
 const loading = ref(false);
 const error = ref('');
 const report = ref<ReportResponse | null>(null);
-const activeTab = ref('综合报告');
+const activeTab = ref('综合分析报告');
 const radarRef = ref<HTMLDivElement | null>(null);
 let radarChart: ReturnType<typeof echarts.init> | null = null;
 
@@ -34,7 +34,12 @@ const tabs = computed(() => {
   if (!report.value) {
     return [];
   }
-  return ['综合报告', ...report.value.sections.map((section) => section.title)];
+  return [
+    '综合分析报告',
+    ...report.value.sections
+      .filter((section) => section.title !== '版本信息' && section.title !== '免责声明')
+      .map((section) => section.title),
+  ];
 });
 
 const activeSection = computed(() => {
@@ -45,6 +50,11 @@ const activeSection = computed(() => {
 });
 
 const activeData = computed<Record<string, unknown>>(() => activeSection.value?.data ?? {});
+const comprehensiveConclusions = computed(() =>
+  (report.value?.sections ?? [])
+    .map((section) => section.data.conclusion)
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0),
+);
 
 function sectionDescription(title: string): string {
   const descriptions: Record<string, string> = {
@@ -159,7 +169,7 @@ async function generateReport(): Promise<void> {
       mode: mode.value,
     });
     report.value = data;
-    activeTab.value = '综合报告';
+    activeTab.value = '综合分析报告';
     void nextTick(renderRadar);
   } catch (err: unknown) {
     error.value = errorMessage(err, '生成报告失败');
@@ -205,7 +215,7 @@ function renderRadar(): void {
 }
 
 watch(activeTab, (tab) => {
-  if (tab === '综合报告') {
+  if (tab === '综合分析报告') {
     void nextTick(renderRadar);
   }
 });
@@ -261,8 +271,12 @@ function selectTab(tab: string): void {
         </button>
       </nav>
 
-      <div v-if="activeTab === '综合报告'" class="report-overview">
+      <div v-if="activeTab === '综合分析报告'" class="report-overview">
+        <p class="comprehensive-label">综合分析结论</p>
         <p class="summary">{{ report.summary }}</p>
+        <ul v-if="comprehensiveConclusions.length > 0" class="comprehensive-conclusions">
+          <li v-for="conclusion in comprehensiveConclusions" :key="conclusion">{{ conclusion }}</li>
+        </ul>
         <p v-if="report.narrative" class="narrative">{{ report.narrative }}</p>
         <div ref="radarRef" class="radar-chart"></div>
       </div>
@@ -339,6 +353,24 @@ function selectTab(tab: string): void {
         <p class="section-description">{{ sectionDescription(activeSection.title) }}</p>
         <p v-if="activeData.conclusion" class="section-conclusion">{{ activeData.conclusion }}</p>
         <pre>{{ JSON.stringify(activeSection.data, null, 2) }}</pre>
+      </div>
+
+      <div v-if="report" class="report-footer">
+        <section>
+          <h3>版本信息</h3>
+          <pre>{{
+            JSON.stringify(report.sections.find((section) => section.title === '版本信息')?.data ?? {}, null, 2)
+          }}</pre>
+        </section>
+        <section>
+          <h3>免责声明</h3>
+          <p>
+            {{
+              report.sections.find((section) => section.title === '免责声明')?.data?.disclaimer ??
+                '本报告由系统自动生成，仅供研究参考，不构成投资建议。'
+            }}
+          </p>
+        </section>
       </div>
     </div>
   </section>
@@ -492,5 +524,37 @@ function selectTab(tab: string): void {
   width: 100%;
   height: 360px;
   margin-top: 1rem;
+}
+
+.comprehensive-label {
+  font-weight: 700;
+  color: #1d4ed8;
+  margin: 0 0 0.5rem;
+}
+
+.comprehensive-conclusions {
+  margin: 0.75rem 0;
+  padding-left: 1.2rem;
+}
+
+.comprehensive-conclusions li {
+  margin: 0.25rem 0;
+}
+
+.report-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.report-footer section {
+  margin-bottom: 1rem;
+}
+
+.report-footer pre {
+  background: #f5f5f5;
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
 }
 </style>

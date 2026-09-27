@@ -5,7 +5,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from stock_research.agents.protocol import AgentContext, AgentResult
-from stock_research.agents.research_summary import ResearchSummaryAgent
+from stock_research.agents.research_summary import ResearchSummaryAgent, _summary_text
 
 
 async def test_research_summary_agent_consumes_module_results() -> None:
@@ -123,3 +123,23 @@ async def test_research_summary_agent_consumes_module_results() -> None:
     assert summary.module_summaries["risk"]["risk_level"] == "MEDIUM"
     assert summary.coverage == 1.0
     assert "600519.SH" in summary.summary_text
+
+
+def test_summary_text_includes_comprehensive_parts() -> None:
+    text = _summary_text(
+        "600519.SH",
+        {
+            "risk": {"risk_level": "MEDIUM"},
+            "market": {"change_pct": 5.0},
+            "fundamental": {"roe": "0.15", "net_margin": "0.20"},
+            "technical": {"rsi": 55.5, "latest_close": 10.5},
+            "supply_chain": {"node_count": 2, "edge_count": 1},
+            "news": {"item_count": 3},
+        },
+    )
+
+    assert "综合分析" in text
+    assert "风险等级 MEDIUM" in text
+    assert "ROE 15.0%" in text
+    assert "供应链 2个节点/1条边" in text
+    assert "新闻公告 3条" in text

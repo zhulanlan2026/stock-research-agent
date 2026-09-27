@@ -8,6 +8,7 @@ from stock_research.agents.report_pipeline import (
     StructuredReportResult,
     StructuredReportSection,
     StructuredReviewAgent,
+    _section_conclusion,
 )
 from stock_research.agents.research_summary import ResearchSummaryResult
 
@@ -110,3 +111,28 @@ async def test_review_agent_requires_revision_for_high_risk() -> None:
 
     review = result.data["result"]
     assert review.decision == "NEEDS_REVISION"
+
+
+def test_section_conclusion_financial_includes_revenue_and_profit() -> None:
+    text = _section_conclusion(
+        "财务",
+        {"revenue": "1200", "net_income": "250", "roe": "0.15", "net_margin": "0.2"},
+    )
+
+    assert "营收约1200" in text
+    assert "净利润约250" in text
+    assert "ROE约" in text
+    assert "净利率约" in text
+
+
+def test_section_conclusion_technical_includes_fft_period() -> None:
+    text = _section_conclusion(
+        "技术",
+        {
+            "latest_close": 10.5,
+            "rsi": 55.5,
+            "fft_periods": [{"period_bars": 12}],
+        },
+    )
+
+    assert "主要周期约12根K线" in text

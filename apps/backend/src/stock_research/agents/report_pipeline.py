@@ -373,15 +373,21 @@ def _section_conclusion(title: str, data: dict[str, Any]) -> str:
         return f"综合风险等级为{risk_text}，数据覆盖度约{coverage_text}。"
 
     if title == "财务":
+        revenue = data.get("revenue")
+        net_income = data.get("net_income")
         roe = data.get("roe")
         net_margin = data.get("net_margin")
         parts = []
+        if revenue is not None:
+            parts.append(f"营收约{revenue}")
+        if net_income is not None:
+            parts.append(f"净利润约{net_income}")
         if roe is not None:
             parts.append(f"ROE约{_percent_text(roe)}")
         if net_margin is not None:
             parts.append(f"净利率约{_percent_text(net_margin)}")
         if parts:
-            return "财务表现：" + "，".join(parts) + "。"
+            return "财务现状：" + "，".join(parts) + "。"
         return "当前财务事实覆盖不足，暂无法形成可靠财务结论。"
 
     if title == "技术":
@@ -389,6 +395,7 @@ def _section_conclusion(title: str, data: dict[str, Any]) -> str:
         rsi = data.get("rsi")
         macd_dif = data.get("macd_dif")
         macd_dea = data.get("macd_dea")
+        fft_periods = data.get("fft_periods") or []
         if latest_close is None and rsi is None:
             return "当前技术指标数据不足，暂无法形成可靠技术结论。"
         parts = []
@@ -401,6 +408,10 @@ def _section_conclusion(title: str, data: dict[str, Any]) -> str:
                 parts.append("MACD处于多头形态")
             else:
                 parts.append("MACD处于空头或弱势形态")
+        if fft_periods:
+            first_period = fft_periods[0].get("period_bars")
+            if first_period is not None:
+                parts.append(f"主要周期约{first_period}根K线")
         return "技术面：" + "，".join(parts) + "。"
 
     if title == "周期分析":

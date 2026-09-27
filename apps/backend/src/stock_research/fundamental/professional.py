@@ -237,21 +237,20 @@ def professional_summary(
     snapshot: ProfessionalFinancialSnapshot,
 ) -> str:
     parts: list[str] = []
-    net_income = snapshot.metrics["net_income"]
     revenue_growth = snapshot.growth["revenue"]
     net_income_growth = snapshot.growth["net_income"]
-    roe = snapshot.ratios["roe"]
-    if net_income is not None:
-        parts.append(f"净利润 {net_income} 元")
+    free_cash_flow = snapshot.free_cash_flow
     if revenue_growth is not None:
         parts.append(f"营收同比 {revenue_growth:.2%}")
     if net_income_growth is not None:
         parts.append(f"净利润同比 {net_income_growth:.2%}")
-    if roe is not None:
-        parts.append(f"ROE {roe:.2%}")
+    if free_cash_flow is not None:
+        parts.append(f"自由现金流 {free_cash_flow} 元")
+    if snapshot.risk_points:
+        parts.append(f"财务风险点 {len(snapshot.risk_points)} 项")
     if not parts:
         return f"{snapshot.symbol} 暂无足够专业财务数据。"
-    return f"{snapshot.symbol} 专业财务概况：" + "，".join(parts) + "。"
+    return f"{snapshot.symbol} 专业财务：" + "，".join(parts) + "。"
 
 
 def professional_payload(

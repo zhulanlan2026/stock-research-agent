@@ -277,14 +277,53 @@ def _coverage(module_summaries: dict[str, dict[str, Any]]) -> float:
 
 
 def _summary_text(symbol: str, module_summaries: dict[str, dict[str, Any]]) -> str:
-    risk = module_summaries.get("risk", {})
+    parts: list[str] = []
+
+    risk_level = module_summaries.get("risk", {}).get("risk_level") or "UNKNOWN"
+    parts.append(f"风险等级 {risk_level}")
+
     market = module_summaries.get("market", {})
-    risk_level = risk.get("risk_level") or "UNKNOWN"
     change_pct = market.get("change_pct")
-    change_text = (
-        f"{change_pct:.2f}%" if isinstance(change_pct, (int, float)) else "暂无"
-    )
-    return f"{symbol} 风险等级 {risk_level}，行情涨跌幅 {change_text}。"
+    if isinstance(change_pct, (int, float)):
+        parts.append(f"行情涨跌幅 {change_pct:.2f}%")
+
+    fundamental = module_summaries.get("fundamental", {})
+    roe = _as_float(fundamental.get("roe"))
+    net_margin = _as_float(fundamental.get("net_margin"))
+    if roe is not None:
+        parts.append(f"ROE {roe:.1%}")
+    if net_margin is not None:
+        parts.append(f"净利率 {net_margin:.1%}")
+
+    technical = module_summaries.get("technical", {})
+    rsi = _as_float(technical.get("rsi"))
+    latest_close = _as_float(technical.get("latest_close"))
+    if rsi is not None:
+        parts.append(f"RSI {rsi:.1f}")
+    if latest_close is not None:
+        parts.append(f"最新收盘 {latest_close:.2f}")
+
+    supply_chain = module_summaries.get("supply_chain", {})
+    edge_count = _as_float(supply_chain.get("edge_count"))
+    node_count = _as_float(supply_chain.get("node_count"))
+    if edge_count is not None and node_count is not None:
+        parts.append(f"供应链 {int(node_count)}个节点/{int(edge_count)}条边")
+
+    news = module_summaries.get("news", {})
+    item_count = _as_float(news.get("item_count"))
+    if item_count is not None:
+        parts.append(f"新闻公告 {int(item_count)}条")
+
+    if not parts:
+        return f"{symbol} 当前数据不足以形成综合分析。"
+    return f"{symbol} 综合分析：" + "，".join(parts) + "。"
+
+
+def _as_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _react_prompt(context: AgentContext, summary: ResearchSummaryResult) -> str:
