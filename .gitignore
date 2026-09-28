@@ -21,3 +21,4 @@ htmlcov/
 !.env.production.example
 feishu_tmux_bridge.py
 apps/xtquant-collector/data/*.sqlite*
+apps/akshare-collector/data/*.sqlite*
