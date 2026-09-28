@@ -39,6 +39,7 @@ _DAILY_BASIC_METRICS: tuple[tuple[str, str], ...] = (
 
 _INCOME_METRICS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("revenue", ("total_revenue", "revenue")),
+    ("cost_of_revenue", ("oper_cost", "total_cogs")),
     ("net_income", ("n_income_attr_p", "n_income")),
 )
 

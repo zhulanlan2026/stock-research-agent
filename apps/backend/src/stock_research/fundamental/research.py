@@ -19,6 +19,13 @@ DEFAULT_SCENARIOS = (
     ScenarioAssumption(name="BEAR", pe=Decimal("14")),
 )
 
+SYMBOL_TO_PEERS: dict[str, tuple[str, ...]] = {
+    "603893.SH": ("300458.SZ", "688099.SH", "688608.SH", "688018.SH"),
+    "601869.SH": ("600487.SH", "600522.SH", "600498.SH"),
+    "301511.SZ": ("600110.SH", "688388.SH", "301150.SZ"),
+    "301183.SZ": ("002273.SZ", "688127.SH", "002036.SZ"),
+}
+
 
 @dataclass(frozen=True)
 class StandardResearchResult:
@@ -51,6 +58,9 @@ class StandardResearchService:
         price: Decimal | None = None,
     ) -> StandardResearchResult:
         scenarios = await self._market_pe_scenarios(symbol, as_of, scenarios)
+        effective_peers = peers if peers is not None else list(
+            SYMBOL_TO_PEERS.get(symbol, ())
+        )
         snapshot = await self._snapshot_engine.calculate(
             symbol,
             as_of,
@@ -58,15 +68,15 @@ class StandardResearchService:
             price=price,
         )
         peer_comparison = None
-        if peers:
+        if effective_peers:
             peer_comparison = await self._peer_engine.calculate(
                 symbol,
-                peers,
+                effective_peers,
                 as_of,
             )
 
         coverage = snapshot.coverage
-        if peer_comparison is not None and peers:
+        if peer_comparison is not None and effective_peers:
             coverage = (coverage + Decimal("1")) / Decimal("2")
 
         return StandardResearchResult(
