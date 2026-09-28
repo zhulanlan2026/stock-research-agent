@@ -42,7 +42,11 @@ _INCOME_METRICS: tuple[tuple[str, tuple[str, ...]], ...] = (
 )
 
 _BALANCESHEET_METRICS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("total_assets", ("total_assets",)),
+    ("total_liabilities", ("total_liab", "total_liabilities")),
     ("total_equity", ("total_hldr_eqy_exc_min_int", "total_hldr_eqy_inc_min_int")),
+    ("current_assets", ("total_cur_assets",)),
+    ("current_liabilities", ("total_cur_liab",)),
 )
 
 _CASHFLOW_METRICS: tuple[tuple[str, tuple[str, ...]], ...] = (

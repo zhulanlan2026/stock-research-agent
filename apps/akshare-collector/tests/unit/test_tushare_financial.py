@@ -160,7 +160,11 @@ def test_load_maps_statement_metrics() -> None:
             {
                 "end_date": "20240930",
                 "ann_date": "2024-10-28",
+                "total_assets": 2000.0,
+                "total_liab": 900.0,
                 "total_hldr_eqy_exc_min_int": 789.0,
+                "total_cur_assets": 700.0,
+                "total_cur_liab": 320.0,
             }
         ]
 
@@ -192,7 +196,11 @@ def test_load_maps_statement_metrics() -> None:
     assert by_metric["revenue"]["value"] == "1234.5"
     assert by_metric["revenue"]["unit"] == "CNY"
     assert by_metric["net_income"]["value"] == "456.7"
+    assert by_metric["total_assets"]["value"] == "2000.0"
+    assert by_metric["total_liabilities"]["value"] == "900.0"
     assert by_metric["total_equity"]["value"] == "789.0"
+    assert by_metric["current_assets"]["value"] == "700.0"
+    assert by_metric["current_liabilities"]["value"] == "320.0"
     assert by_metric["operating_cash_flow"]["value"] == "321.0"
     assert by_metric["revenue"]["period"] == "20240930"
 
