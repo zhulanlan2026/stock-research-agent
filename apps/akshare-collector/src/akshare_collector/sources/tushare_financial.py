@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
@@ -64,6 +65,22 @@ def _records(frame: Any) -> list[dict[str, object]]:
     if not isinstance(records, list):
         return []
     return [dict(record) for record in records if isinstance(record, dict)]
+
+
+def _with_retry(
+    fn: Callable[..., list[dict[str, object]]],
+    *args: Any,
+    retries: int = 3,
+    delay: float = 1.0,
+) -> list[dict[str, object]]:
+    for attempt in range(retries):
+        try:
+            return fn(*args)
+        except Exception:
+            if attempt == retries - 1:
+                raise
+            time.sleep(delay)
+    return []
 
 
 def _decimal(value: object) -> Decimal | None:
@@ -205,15 +222,15 @@ class TushareFinancialFactProvider:
         records: list[dict[str, object]] = []
         for symbol in symbols:
             ts_code = tushare_code(symbol)
-            for row in self._fina_indicator_fn(ts_code, start_date, end_date):
+            for row in _with_retry(self._fina_indicator_fn, ts_code, start_date, end_date):
                 records.extend(self._fina_indicator_facts(symbol, row))
-            for row in self._daily_basic_fn(ts_code, start_date, end_date):
+            for row in _with_retry(self._daily_basic_fn, ts_code, start_date, end_date):
                 records.extend(self._daily_basic_facts(symbol, row))
-            for row in self._income_fn(ts_code, start_date, end_date):
+            for row in _with_retry(self._income_fn, ts_code, start_date, end_date):
                 records.extend(self._statement_facts(symbol, row, _INCOME_METRICS))
-            for row in self._balancesheet_fn(ts_code, start_date, end_date):
+            for row in _with_retry(self._balancesheet_fn, ts_code, start_date, end_date):
                 records.extend(self._statement_facts(symbol, row, _BALANCESHEET_METRICS))
-            for row in self._cashflow_fn(ts_code, start_date, end_date):
+            for row in _with_retry(self._cashflow_fn, ts_code, start_date, end_date):
                 records.extend(self._statement_facts(symbol, row, _CASHFLOW_METRICS))
         return records
 
