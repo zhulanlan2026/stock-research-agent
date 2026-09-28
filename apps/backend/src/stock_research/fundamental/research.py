@@ -7,6 +7,7 @@ from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.fundamental.peer import PeerComparison, PeerEngine
+from stock_research.fundamental.pit import PitResolver
 from stock_research.fundamental.scenario import ScenarioAssumption
 from stock_research.fundamental.snapshot import SnapshotEngine, UnifiedSnapshot
 
@@ -38,6 +39,7 @@ class StandardResearchService:
     def __init__(self, session: AsyncSession) -> None:
         self._snapshot_engine = SnapshotEngine(session)
         self._peer_engine = PeerEngine(session)
+        self._pit_resolver = PitResolver(session)
 
     async def run(
         self,
@@ -48,6 +50,7 @@ class StandardResearchService:
         peers: list[str] | None = None,
         price: Decimal | None = None,
     ) -> StandardResearchResult:
+        scenarios = await self._market_pe_scenarios(symbol, as_of, scenarios)
         snapshot = await self._snapshot_engine.calculate(
             symbol,
             as_of,
@@ -75,3 +78,23 @@ class StandardResearchService:
             peer_comparison=peer_comparison,
             coverage=coverage,
         )
+
+    async def _market_pe_scenarios(
+        self,
+        symbol: str,
+        as_of: datetime,
+        scenarios: list[ScenarioAssumption],
+    ) -> list[ScenarioAssumption]:
+        resolved = await self._pit_resolver.resolve(
+            symbol=symbol,
+            metric="pe_ttm",
+            as_of=as_of,
+        )
+        if resolved is None or resolved.value <= 0:
+            return scenarios
+        base_pe = resolved.value
+        return [
+            ScenarioAssumption(name="BASE", pe=base_pe),
+            ScenarioAssumption(name="BULL", pe=base_pe * Decimal("1.4")),
+            ScenarioAssumption(name="BEAR", pe=base_pe * Decimal("0.6")),
+        ]
