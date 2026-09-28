@@ -29,6 +29,8 @@ const report = ref<ReportResponse | null>(null);
 const activeTab = ref('综合分析报告');
 const radarRef = ref<HTMLDivElement | null>(null);
 let radarChart: ReturnType<typeof echarts.init> | null = null;
+const peerRef = ref<HTMLDivElement | null>(null);
+let peerChart: ReturnType<typeof echarts.init> | null = null;
 
 const tabs = computed(() => {
   if (!report.value) {
@@ -214,14 +216,74 @@ function renderRadar(): void {
   });
 }
 
+const PEER_METRIC_LABELS: Record<string, string> = {
+  gross_margin: '毛利率',
+  net_margin: '净利率',
+  roe: 'ROE',
+  roa: 'ROA',
+  debt_to_equity: '负债权益比',
+  current_ratio: '流动比率',
+  operating_cash_flow_to_net_income: '现金流/净利润',
+};
+
+function peerRanks(value: unknown): Record<string, number> {
+  if (typeof value !== 'object' || value === null) {
+    return {};
+  }
+  const out: Record<string, number> = {};
+  for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+    const num = Number(val);
+    if (!Number.isNaN(num)) {
+      out[key] = num;
+    }
+  }
+  return out;
+}
+
+function renderPeerRanks(): void {
+  if (!peerRef.value) {
+    return;
+  }
+  const ranks = peerRanks(activeData.value.peer_ranks);
+  const entries = Object.entries(ranks);
+  if (entries.length === 0) {
+    return;
+  }
+  const indicators = entries.map(([key]) => ({
+    name: PEER_METRIC_LABELS[key] ?? key,
+    max: 1,
+  }));
+  const values = entries.map(([key, value]) =>
+    key === 'debt_to_equity' ? 1 - value : value,
+  );
+  peerChart?.dispose();
+  peerChart = echarts.init(peerRef.value);
+  peerChart.setOption({
+    tooltip: {},
+    radar: {
+      indicator: indicators,
+    },
+    series: [
+      {
+        type: 'radar',
+        data: [{ value: values, name: '同业分位' }],
+      },
+    ],
+  });
+}
+
 watch(activeTab, (tab) => {
   if (tab === '综合分析报告') {
     void nextTick(renderRadar);
+  }
+  if (tab === '同业') {
+    void nextTick(renderPeerRanks);
   }
 });
 
 onBeforeUnmount(() => {
   radarChart?.dispose();
+  peerChart?.dispose();
 });
 
 function selectTab(tab: string): void {
@@ -346,6 +408,17 @@ function selectTab(tab: string): void {
             <p>{{ step.evidence_ids.join(', ') || '—' }}</p>
           </li>
         </ol>
+      </div>
+
+      <div v-else-if="activeSection?.title === '同业'" class="report-section">
+        <h3>同业</h3>
+        <p class="section-description">{{ sectionDescription(activeSection.title) }}</p>
+        <p v-if="activeData.conclusion" class="section-conclusion">{{ activeData.conclusion }}</p>
+        <p class="muted">
+          同业公司：{{ Array.isArray(activeData.peers) ? activeData.peers.join('、') : '—' }}
+        </p>
+        <div ref="peerRef" class="peer-chart"></div>
+        <p class="muted">雷达图数值表示该指标在同业中的分位（越靠外越领先；负债权益比已翻转，越靠外表示负债越低）。</p>
       </div>
 
       <div v-else-if="activeSection" class="report-section">
@@ -524,6 +597,12 @@ function selectTab(tab: string): void {
   width: 100%;
   height: 360px;
   margin-top: 1rem;
+}
+
+.peer-chart {
+  width: 100%;
+  height: 320px;
+  margin-top: 0.5rem;
 }
 
 .comprehensive-label {
