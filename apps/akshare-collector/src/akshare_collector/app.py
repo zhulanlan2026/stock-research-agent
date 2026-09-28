@@ -48,11 +48,13 @@ class Collector:
         elif settings.market_source == "tushare":
             self.market_source = TushareMarketSource(
                 settings.tushare_token,
-                history_days=settings.history_days,
+                history_days=settings.bars_history_days,
                 adjust=settings.tushare_adjust,
             )
         else:
-            self.market_source = AkShareMarketSource(history_days=settings.history_days)
+            self.market_source = AkShareMarketSource(
+                history_days=settings.bars_history_days
+            )
         self.cross_validator = cross_validator or TushareCrossValidator(
             settings.tushare_token,
             settings.cross_validation_tolerance,

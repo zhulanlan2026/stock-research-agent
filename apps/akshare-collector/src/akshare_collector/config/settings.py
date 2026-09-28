@@ -22,8 +22,10 @@ class CollectorSettings(BaseSettings):
     collect_symbols: str = ""
     # 需要采集的 K 线周期，逗号分隔，例如 1m,5m,1d。
     collect_periods: str = "1m,1d"
-    # 日线回补天数。
+    # 财务事实回补天数。
     history_days: int = 730
+    # 日线 K 线回补天数。
+    bars_history_days: int = 730
 
     # 行情主数据源：akshare 或 tushare。
     market_source: str = "akshare"
@@ -73,6 +75,8 @@ class CollectorSettings(BaseSettings):
             raise ValueError("COLLECTOR_CROSS_VALIDATION_TOLERANCE must be >= 0")
         if self.history_days <= 0:
             raise ValueError("COLLECTOR_HISTORY_DAYS must be positive")
+        if self.bars_history_days <= 0:
+            raise ValueError("COLLECTOR_BARS_HISTORY_DAYS must be positive")
         if self.quote_refresh_seconds <= 0:
             raise ValueError("COLLECTOR_QUOTE_REFRESH_SECONDS must be positive")
         if self.bars_refresh_seconds <= 0:
