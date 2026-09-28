@@ -30,6 +30,10 @@ const router = createRouter({
           component: () => import('../app/SupplyChainView.vue'),
         },
         {
+          path: 'backtest',
+          component: () => import('../app/BacktestView.vue'),
+        },
+        {
           path: 'review',
           component: () => import('../app/ReviewView.vue'),
         },
