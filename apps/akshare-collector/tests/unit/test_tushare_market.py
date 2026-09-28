@@ -103,8 +103,30 @@ def test_fetch_bars_rejects_unsupported_period() -> None:
         source.fetch_bars(["600519.SH"], "2h")
 
 
-def test_quotes_and_announcements_are_empty() -> None:
+def test_fetch_quotes_uses_latest_daily_close() -> None:
+    def bars_fn(
+        ts_code: str,
+        freq: str,
+        start_date: str,
+        end_date: str,
+        adjust: str | None,
+    ) -> list[dict[str, object]]:
+        assert freq == "D"
+        return [
+            {"trade_date": "20250102", "close": 1700.0},
+            {"trade_date": "20250103", "close": 1710.0},
+        ]
+
+    source = TushareMarketSource("token", bars_fn=bars_fn)
+
+    quotes = source.fetch_quotes(["600519.SH"])
+
+    assert len(quotes) == 1
+    assert quotes[0].symbol == "600519.SH"
+    assert quotes[0].fields["lastPrice"] == 1710.0
+
+
+def test_fetch_announcements_empty() -> None:
     source = TushareMarketSource("token")
 
-    assert source.fetch_quotes(["600519.SH"]) == []
     assert source.fetch_announcements(["600519.SH"]) == []

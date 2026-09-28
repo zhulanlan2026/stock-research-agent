@@ -6,7 +6,7 @@ from typing import Any
 
 from akshare_collector.sources.records import AnnouncementRecord, BarRecord, QuoteRecord
 from akshare_collector.sources.symbols import tushare_code
-from akshare_collector.sources.timeutil import date_str, datetime_ms
+from akshare_collector.sources.timeutil import date_str, datetime_ms, utcnow_ms
 
 TushareBarsRawFn = Callable[
     [str, str, str, str, str | None], list[dict[str, object]]
@@ -107,7 +107,8 @@ def _make_default_bars_raw(token: str) -> TushareBarsRawFn:
 class TushareMarketSource:
     """Tushare 行情数据源，用于替代 AKShare 作为主数据源。
 
-    Tushare 不提供免费实时快照与公告，因此这两个方法返回空列表，仅支持历史 K 线。
+    Tushare 不提供免费实时快照与公告，因此快照用最新日线收盘价近似，
+    公告仍返回空列表。
     """
 
     name = "tushare"
@@ -158,7 +159,33 @@ class TushareMarketSource:
         return bars
 
     def fetch_quotes(self, symbols: Sequence[str]) -> list[QuoteRecord]:
-        return []
+        if not symbols or not self.token:
+            return []
+        now = datetime.now(timezone.utc)
+        start_date = date_str(now - timedelta(days=7))
+        end_date = date_str(now)
+        now_ms = utcnow_ms()
+        quotes: list[QuoteRecord] = []
+        for symbol in symbols:
+            ts_code = tushare_code(symbol)
+            rows = self._bars_fn(ts_code, "D", start_date, end_date, None)
+            if not rows:
+                continue
+            latest = max(
+                rows,
+                key=lambda row: str(_first(row, "trade_date", "date") or ""),
+            )
+            close = _number(latest.get("close"))
+            if close is None:
+                continue
+            quotes.append(
+                QuoteRecord(
+                    symbol=symbol,
+                    time_ms=now_ms,
+                    fields={"lastPrice": close},
+                )
+            )
+        return quotes
 
     def fetch_announcements(
         self,
