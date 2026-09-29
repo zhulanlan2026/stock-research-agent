@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +16,12 @@ class FactorValue:
     name: str
     category: str
     value: Decimal | None
+
+
+@dataclass(frozen=True)
+class FactorHistoryPoint:
+    as_of: datetime
+    factors: list[FactorValue]
 
 
 def _momentum(closes: list[Decimal], window: int) -> Decimal | None:
@@ -69,6 +75,26 @@ def compute_technical_factors(closes: list[Decimal]) -> dict[str, Decimal | None
     }
 
 
+def month_end_timestamps(start: datetime, end: datetime) -> list[datetime]:
+    timestamps: list[datetime] = []
+    year = start.year
+    month = start.month
+    while True:
+        if month == 12:
+            last_day = datetime(year, 12, 31, tzinfo=start.tzinfo)
+            next_year, next_month = year + 1, 1
+        else:
+            first_next = datetime(year, month + 1, 1, tzinfo=start.tzinfo)
+            last_day = first_next - timedelta(days=1)
+            next_year, next_month = year, month + 1
+        if last_day > end:
+            break
+        if last_day >= start:
+            timestamps.append(last_day)
+        year, month = next_year, next_month
+    return timestamps
+
+
 class FactorPool:
     """聚合投研已有的财务/估值因子与技术/动量因子。"""
 
@@ -110,3 +136,16 @@ class FactorPool:
                     )
                 )
         return values
+
+    async def compute_history(
+        self,
+        symbol: str,
+        timestamps: list[datetime],
+    ) -> list[FactorHistoryPoint]:
+        return [
+            FactorHistoryPoint(
+                as_of=timestamp,
+                factors=await self.compute(symbol, timestamp),
+            )
+            for timestamp in timestamps
+        ]

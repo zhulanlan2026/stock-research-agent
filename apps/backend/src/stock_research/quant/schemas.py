@@ -49,3 +49,13 @@ class FactorPoolResponse(BaseModel):
     symbol: str
     as_of: datetime
     factors: list[FactorValueResponse]
+
+
+class FactorHistoryPointResponse(BaseModel):
+    as_of: datetime
+    factors: list[FactorValueResponse]
+
+
+class FactorHistoryResponse(BaseModel):
+    symbol: str
+    points: list[FactorHistoryPointResponse]

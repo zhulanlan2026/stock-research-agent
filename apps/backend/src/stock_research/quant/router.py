@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,13 +7,15 @@ from stock_research.auth.dependencies import get_current_user
 from stock_research.market.bar_service import MarketBarService
 from stock_research.quant.backtest import run_moving_average_backtest
 from stock_research.quant.factor import FACTOR_POOL
-from stock_research.quant.factor_pool import FactorPool
+from stock_research.quant.factor_pool import FactorPool, month_end_timestamps
 from stock_research.quant.schemas import (
     BacktestCurvePoint,
     BacktestMetrics,
     BacktestRequest,
     BacktestResponse,
     FactorDefinitionResponse,
+    FactorHistoryPointResponse,
+    FactorHistoryResponse,
     FactorPoolResponse,
     FactorValueResponse,
 )
@@ -95,5 +97,36 @@ async def compute_factors(
                 value=value.value,
             )
             for value in values
+        ],
+    )
+
+
+@factors_router.get("/{symbol}/history", response_model=FactorHistoryResponse)
+async def compute_factor_history(
+    symbol: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> FactorHistoryResponse:
+    end_dt = end or datetime.now(timezone.utc)
+    start_dt = start or (end_dt - timedelta(days=730))
+    timestamps = month_end_timestamps(start_dt, end_dt)
+    points = await FactorPool(session).compute_history(symbol, timestamps)
+    return FactorHistoryResponse(
+        symbol=symbol,
+        points=[
+            FactorHistoryPointResponse(
+                as_of=point.as_of,
+                factors=[
+                    FactorValueResponse(
+                        name=value.name,
+                        category=value.category,
+                        value=value.value,
+                    )
+                    for value in point.factors
+                ],
+            )
+            for point in points
         ],
     )

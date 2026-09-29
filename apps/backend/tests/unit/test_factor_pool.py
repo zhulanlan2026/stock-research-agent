@@ -1,6 +1,10 @@
+from datetime import datetime, timezone
 from decimal import Decimal
 
-from stock_research.quant.factor_pool import compute_technical_factors
+from stock_research.quant.factor_pool import (
+    compute_technical_factors,
+    month_end_timestamps,
+)
 
 
 def test_compute_technical_factors_returns_values() -> None:
@@ -23,3 +27,12 @@ def test_compute_technical_factors_none_with_short_history() -> None:
     assert factors["momentum_60"] is None
     assert factors["volatility_20"] is None
     assert factors["rsi_14"] is None
+
+
+def test_month_end_timestamps() -> None:
+    start = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    end = datetime(2024, 3, 31, tzinfo=timezone.utc)
+
+    timestamps = month_end_timestamps(start, end)
+
+    assert [ts.day for ts in timestamps] == [31, 29, 31]
