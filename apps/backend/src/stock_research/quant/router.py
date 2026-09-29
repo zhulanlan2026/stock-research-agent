@@ -6,6 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from stock_research.auth.dependencies import get_current_user
 from stock_research.market.bar_service import MarketBarService
 from stock_research.quant.backtest import run_moving_average_backtest
+from stock_research.quant.cross_sectional import (
+    DEFAULT_UNIVERSE,
+    CrossSectionalICService,
+)
 from stock_research.quant.factor import FACTOR_POOL
 from stock_research.quant.factor_pool import FactorPool, month_end_timestamps
 from stock_research.quant.ic_service import TimeSeriesICService
@@ -133,6 +137,25 @@ async def compute_factor_history(
             for point in points
         ],
     )
+
+
+@ic_router.get("/cross-sectional", response_model=list[FactorICResponse])
+async def compute_cross_sectional_ic(
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> list[FactorICResponse]:
+    results = await CrossSectionalICService(session).analyze(list(DEFAULT_UNIVERSE))
+    return [
+        FactorICResponse(
+            factor=result.factor,
+            observations=result.observations,
+            ic_mean=result.ic_mean,
+            ic_std=result.ic_std,
+            icir=result.icir,
+            ic_positive_ratio=result.ic_positive_ratio,
+        )
+        for result in results
+    ]
 
 
 @ic_router.get("/{symbol}", response_model=list[FactorICResponse])
