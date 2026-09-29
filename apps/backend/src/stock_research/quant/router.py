@@ -8,6 +8,7 @@ from stock_research.market.bar_service import MarketBarService
 from stock_research.quant.backtest import run_moving_average_backtest
 from stock_research.quant.factor import FACTOR_POOL
 from stock_research.quant.factor_pool import FactorPool, month_end_timestamps
+from stock_research.quant.ic_service import TimeSeriesICService
 from stock_research.quant.schemas import (
     BacktestCurvePoint,
     BacktestMetrics,
@@ -16,6 +17,7 @@ from stock_research.quant.schemas import (
     FactorDefinitionResponse,
     FactorHistoryPointResponse,
     FactorHistoryResponse,
+    FactorICResponse,
     FactorPoolResponse,
     FactorValueResponse,
 )
@@ -24,6 +26,7 @@ from stock_research.stores.session import get_session
 
 router = APIRouter(prefix="/backtest", tags=["backtest"])
 factors_router = APIRouter(prefix="/factors", tags=["factors"])
+ic_router = APIRouter(prefix="/ic", tags=["ic"])
 
 
 @router.post("", response_model=BacktestResponse)
@@ -130,3 +133,24 @@ async def compute_factor_history(
             for point in points
         ],
     )
+
+
+@ic_router.get("/{symbol}", response_model=list[FactorICResponse])
+async def compute_ic(
+    symbol: str,
+    horizon: int = 20,
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> list[FactorICResponse]:
+    results = await TimeSeriesICService(session).analyze(symbol, horizon=horizon)
+    return [
+        FactorICResponse(
+            factor=result.factor,
+            observations=result.observations,
+            ic_mean=result.ic_mean,
+            ic_std=result.ic_std,
+            icir=result.icir,
+            ic_positive_ratio=result.ic_positive_ratio,
+        )
+        for result in results
+    ]

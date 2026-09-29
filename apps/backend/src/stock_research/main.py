@@ -31,7 +31,7 @@ from stock_research.market.router import router as market_router
 from stock_research.observability.router import router as observability_router
 from stock_research.outbox.dispatcher import OutboxDispatcher
 from stock_research.outbox.handlers import build_default_registry
-from stock_research.quant.router import factors_router
+from stock_research.quant.router import factors_router, ic_router
 from stock_research.quant.router import router as quant_router
 from stock_research.review.router import router as review_router
 from stock_research.stores.models.workflow import Task
@@ -154,6 +154,7 @@ def create_app() -> FastAPI:
     app.include_router(review_router, prefix=settings.api_v1_prefix)
     app.include_router(quant_router, prefix=settings.api_v1_prefix)
     app.include_router(factors_router, prefix=settings.api_v1_prefix)
+    app.include_router(ic_router, prefix=settings.api_v1_prefix)
     return app
 
 

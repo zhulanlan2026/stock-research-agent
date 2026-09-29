@@ -59,3 +59,12 @@ class FactorHistoryPointResponse(BaseModel):
 class FactorHistoryResponse(BaseModel):
     symbol: str
     points: list[FactorHistoryPointResponse]
+
+
+class FactorICResponse(BaseModel):
+    factor: str
+    observations: int
+    ic_mean: Decimal | None
+    ic_std: Decimal | None
+    icir: Decimal | None
+    ic_positive_ratio: Decimal | None
