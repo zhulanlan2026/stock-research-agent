@@ -14,6 +14,7 @@ from stock_research.quant.factor import FACTOR_POOL
 from stock_research.quant.factor_pool import FactorPool, month_end_timestamps
 from stock_research.quant.ic_service import TimeSeriesICService
 from stock_research.quant.layered import LayeredReturnService
+from stock_research.quant.multi_factor import MultiFactorService
 from stock_research.quant.schemas import (
     BacktestCurvePoint,
     BacktestMetrics,
@@ -26,6 +27,7 @@ from stock_research.quant.schemas import (
     FactorPoolResponse,
     FactorValueResponse,
     LayeredReturnResponse,
+    MultiFactorResponse,
 )
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
@@ -34,6 +36,7 @@ router = APIRouter(prefix="/backtest", tags=["backtest"])
 factors_router = APIRouter(prefix="/factors", tags=["factors"])
 ic_router = APIRouter(prefix="/ic", tags=["ic"])
 layered_router = APIRouter(prefix="/layered", tags=["layered"])
+multi_factor_router = APIRouter(prefix="/multi-factor", tags=["multi-factor"])
 
 
 @router.post("", response_model=BacktestResponse)
@@ -196,3 +199,23 @@ async def compute_layered_returns(
         )
         for result in results
     ]
+
+
+@multi_factor_router.get("", response_model=MultiFactorResponse)
+async def compute_multi_factor(
+    top_n: int = 10,
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> MultiFactorResponse:
+    result = await MultiFactorService(session).backtest(
+        list(DEFAULT_UNIVERSE),
+        top_n=top_n,
+    )
+    return MultiFactorResponse(
+        periods=result.periods,
+        portfolio_return=result.portfolio_return,
+        portfolio_annualized=result.portfolio_annualized,
+        portfolio_max_drawdown=result.portfolio_max_drawdown,
+        benchmark_return=result.benchmark_return,
+        benchmark_annualized=result.benchmark_annualized,
+    )

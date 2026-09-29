@@ -74,3 +74,12 @@ class LayeredReturnResponse(BaseModel):
     factor: str
     quantiles: list[Decimal]
     long_short: Decimal
+
+
+class MultiFactorResponse(BaseModel):
+    periods: int
+    portfolio_return: float
+    portfolio_annualized: float
+    portfolio_max_drawdown: float
+    benchmark_return: float
+    benchmark_annualized: float
