@@ -18,6 +18,7 @@ async function logout(): Promise<void> {
       <span>stock-research-platform</span>
       <nav class="nav">
         <router-link to="/">工作台</router-link>
+        <router-link to="/factors">因子池</router-link>
         <router-link to="/backtest">量化回测</router-link>
         <router-link to="/tasks">任务历史</router-link>
         <router-link to="/review">审核中心</router-link>

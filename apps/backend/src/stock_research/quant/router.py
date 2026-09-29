@@ -1,19 +1,27 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stock_research.auth.dependencies import get_current_user
 from stock_research.market.bar_service import MarketBarService
 from stock_research.quant.backtest import run_moving_average_backtest
+from stock_research.quant.factor import FACTOR_POOL
+from stock_research.quant.factor_pool import FactorPool
 from stock_research.quant.schemas import (
     BacktestCurvePoint,
     BacktestMetrics,
     BacktestRequest,
     BacktestResponse,
+    FactorDefinitionResponse,
+    FactorPoolResponse,
+    FactorValueResponse,
 )
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
 
 router = APIRouter(prefix="/backtest", tags=["backtest"])
+factors_router = APIRouter(prefix="/factors", tags=["factors"])
 
 
 @router.post("", response_model=BacktestResponse)
@@ -52,5 +60,40 @@ async def run_backtest(
         curve=[
             BacktestCurvePoint(time=point.time, equity=point.equity)
             for point in result.curve
+        ],
+    )
+
+
+@factors_router.get("", response_model=list[FactorDefinitionResponse])
+async def list_factors() -> list[FactorDefinitionResponse]:
+    return [
+        FactorDefinitionResponse(
+            name=definition.name,
+            category=definition.category,
+            description=definition.description,
+        )
+        for definition in FACTOR_POOL
+    ]
+
+
+@factors_router.get("/{symbol}", response_model=FactorPoolResponse)
+async def compute_factors(
+    symbol: str,
+    as_of: datetime | None = None,
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> FactorPoolResponse:
+    as_of = as_of or datetime.now(timezone.utc)
+    values = await FactorPool(session).compute(symbol, as_of)
+    return FactorPoolResponse(
+        symbol=symbol,
+        as_of=as_of,
+        factors=[
+            FactorValueResponse(
+                name=value.name,
+                category=value.category,
+                value=value.value,
+            )
+            for value in values
         ],
     )

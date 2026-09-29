@@ -34,6 +34,10 @@ const router = createRouter({
           component: () => import('../app/BacktestView.vue'),
         },
         {
+          path: 'factors',
+          component: () => import('../app/FactorPoolView.vue'),
+        },
+        {
           path: 'review',
           component: () => import('../app/ReviewView.vue'),
         },

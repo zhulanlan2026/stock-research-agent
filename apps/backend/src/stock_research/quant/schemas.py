@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -30,3 +31,21 @@ class BacktestResponse(BaseModel):
     long_window: int
     metrics: BacktestMetrics
     curve: list[BacktestCurvePoint]
+
+
+class FactorDefinitionResponse(BaseModel):
+    name: str
+    category: str
+    description: str
+
+
+class FactorValueResponse(BaseModel):
+    name: str
+    category: str
+    value: Decimal | None
+
+
+class FactorPoolResponse(BaseModel):
+    symbol: str
+    as_of: datetime
+    factors: list[FactorValueResponse]
