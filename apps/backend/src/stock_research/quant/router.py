@@ -13,6 +13,7 @@ from stock_research.quant.cross_sectional import (
 from stock_research.quant.factor import FACTOR_POOL
 from stock_research.quant.factor_pool import FactorPool, month_end_timestamps
 from stock_research.quant.ic_service import TimeSeriesICService
+from stock_research.quant.layered import LayeredReturnService
 from stock_research.quant.schemas import (
     BacktestCurvePoint,
     BacktestMetrics,
@@ -24,6 +25,7 @@ from stock_research.quant.schemas import (
     FactorICResponse,
     FactorPoolResponse,
     FactorValueResponse,
+    LayeredReturnResponse,
 )
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
@@ -31,6 +33,7 @@ from stock_research.stores.session import get_session
 router = APIRouter(prefix="/backtest", tags=["backtest"])
 factors_router = APIRouter(prefix="/factors", tags=["factors"])
 ic_router = APIRouter(prefix="/ic", tags=["ic"])
+layered_router = APIRouter(prefix="/layered", tags=["layered"])
 
 
 @router.post("", response_model=BacktestResponse)
@@ -174,6 +177,22 @@ async def compute_ic(
             ic_std=result.ic_std,
             icir=result.icir,
             ic_positive_ratio=result.ic_positive_ratio,
+        )
+        for result in results
+    ]
+
+
+@layered_router.get("", response_model=list[LayeredReturnResponse])
+async def compute_layered_returns(
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> list[LayeredReturnResponse]:
+    results = await LayeredReturnService(session).analyze(list(DEFAULT_UNIVERSE))
+    return [
+        LayeredReturnResponse(
+            factor=result.factor,
+            quantiles=result.quantiles,
+            long_short=result.long_short,
         )
         for result in results
     ]

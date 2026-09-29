@@ -68,3 +68,9 @@ class FactorICResponse(BaseModel):
     ic_std: Decimal | None
     icir: Decimal | None
     ic_positive_ratio: Decimal | None
+
+
+class LayeredReturnResponse(BaseModel):
+    factor: str
+    quantiles: list[Decimal]
+    long_short: Decimal
