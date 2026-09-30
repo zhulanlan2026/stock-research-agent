@@ -77,9 +77,18 @@ class LayeredReturnResponse(BaseModel):
 
 
 class MultiFactorResponse(BaseModel):
+    top_n: int
     periods: int
     portfolio_return: float
     portfolio_annualized: float
     portfolio_max_drawdown: float
     benchmark_return: float
     benchmark_annualized: float
+
+
+class SampleSplitResponse(BaseModel):
+    top_n: int
+    in_sample_periods: int
+    in_sample_return: float
+    out_sample_periods: int
+    out_sample_return: float

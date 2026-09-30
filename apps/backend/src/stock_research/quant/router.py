@@ -28,6 +28,7 @@ from stock_research.quant.schemas import (
     FactorValueResponse,
     LayeredReturnResponse,
     MultiFactorResponse,
+    SampleSplitResponse,
 )
 from stock_research.stores.models.iam import User
 from stock_research.stores.session import get_session
@@ -204,14 +205,17 @@ async def compute_layered_returns(
 @multi_factor_router.get("", response_model=MultiFactorResponse)
 async def compute_multi_factor(
     top_n: int = 10,
+    cost_rate: float = 0.0,
     _: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> MultiFactorResponse:
     result = await MultiFactorService(session).backtest(
         list(DEFAULT_UNIVERSE),
         top_n=top_n,
+        cost_rate=cost_rate,
     )
     return MultiFactorResponse(
+        top_n=result.top_n,
         periods=result.periods,
         portfolio_return=result.portfolio_return,
         portfolio_annualized=result.portfolio_annualized,
@@ -219,3 +223,49 @@ async def compute_multi_factor(
         benchmark_return=result.benchmark_return,
         benchmark_annualized=result.benchmark_annualized,
     )
+
+
+@multi_factor_router.get("/out-of-sample", response_model=SampleSplitResponse)
+async def compute_out_of_sample(
+    top_n: int = 10,
+    cost_rate: float = 0.0,
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> SampleSplitResponse:
+    result = await MultiFactorService(session).out_of_sample(
+        list(DEFAULT_UNIVERSE),
+        top_n=top_n,
+        cost_rate=cost_rate,
+    )
+    return SampleSplitResponse(
+        top_n=result.top_n,
+        in_sample_periods=result.in_sample_periods,
+        in_sample_return=result.in_sample_return,
+        out_sample_periods=result.out_sample_periods,
+        out_sample_return=result.out_sample_return,
+    )
+
+
+@multi_factor_router.get("/sweep", response_model=list[MultiFactorResponse])
+async def compute_parameter_sweep(
+    cost_rate: float = 0.0,
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> list[MultiFactorResponse]:
+    results = await MultiFactorService(session).parameter_sweep(
+        list(DEFAULT_UNIVERSE),
+        top_n_values=[5, 10, 15, 20],
+        cost_rate=cost_rate,
+    )
+    return [
+        MultiFactorResponse(
+            top_n=result.top_n,
+            periods=result.periods,
+            portfolio_return=result.portfolio_return,
+            portfolio_annualized=result.portfolio_annualized,
+            portfolio_max_drawdown=result.portfolio_max_drawdown,
+            benchmark_return=result.benchmark_return,
+            benchmark_annualized=result.benchmark_annualized,
+        )
+        for result in results
+    ]

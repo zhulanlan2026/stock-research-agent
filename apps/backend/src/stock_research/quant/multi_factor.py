@@ -26,12 +26,31 @@ FACTOR_CONFIG: tuple[tuple[str, int, float], ...] = (
 
 @dataclass(frozen=True)
 class MultiFactorResult:
+    top_n: int
     periods: int
     portfolio_return: float
     portfolio_annualized: float
     portfolio_max_drawdown: float
     benchmark_return: float
     benchmark_annualized: float
+
+
+@dataclass(frozen=True)
+class PeriodResult:
+    timestamp: datetime
+    selected: tuple[str, ...]
+    portfolio_return: Decimal
+    benchmark_return: Decimal
+    turnover: Decimal
+
+
+@dataclass(frozen=True)
+class SampleSplitResult:
+    top_n: int
+    in_sample_periods: int
+    in_sample_return: float
+    out_sample_periods: int
+    out_sample_return: float
 
 
 def _zscore(values: list[Decimal]) -> list[Decimal]:
@@ -57,7 +76,109 @@ class MultiFactorService:
         horizon_days: int = 20,
         start: datetime | None = None,
         end: datetime | None = None,
+        cost_rate: float = 0.0,
     ) -> MultiFactorResult:
+        periods = await self._collect_periods(
+            symbols,
+            top_n=top_n,
+            horizon_days=horizon_days,
+            start=start,
+            end=end,
+        )
+        returns = [
+            period.portfolio_return - period.turnover * Decimal("2") * Decimal(str(cost_rate))
+            for period in periods
+        ]
+        benchmark_returns = [period.benchmark_return for period in periods]
+        portfolio_equity = _cumulative(returns)
+        benchmark_equity = _cumulative(benchmark_returns)
+        years = Decimal(len(returns)) / Decimal("12")
+        return MultiFactorResult(
+            top_n=top_n,
+            periods=len(returns),
+            portfolio_return=float(portfolio_equity - Decimal("1")),
+            portfolio_annualized=float(
+                portfolio_equity ** (Decimal("1") / years) - Decimal("1")
+                if years > 0 and portfolio_equity > 0 else Decimal("0")
+            ),
+            portfolio_max_drawdown=float(_max_drawdown(returns)),
+            benchmark_return=float(benchmark_equity - Decimal("1")),
+            benchmark_annualized=float(
+                benchmark_equity ** (Decimal("1") / years) - Decimal("1")
+                if years > 0 and benchmark_equity > 0 else Decimal("0")
+            ),
+        )
+
+    async def out_of_sample(
+        self,
+        symbols: list[str],
+        *,
+        top_n: int = 10,
+        horizon_days: int = 20,
+        start: datetime | None = None,
+        end: datetime | None = None,
+        split_ratio: float = 0.6,
+        cost_rate: float = 0.0,
+    ) -> SampleSplitResult:
+        periods = await self._collect_periods(
+            symbols,
+            top_n=top_n,
+            horizon_days=horizon_days,
+            start=start,
+            end=end,
+        )
+        split_index = int(len(periods) * split_ratio)
+        in_sample = periods[:split_index]
+        out_sample = periods[split_index:]
+
+        def net_return(part: list[PeriodResult]) -> float:
+            equity = Decimal("1")
+            for period in part:
+                cost = period.turnover * Decimal("2") * Decimal(str(cost_rate))
+                net = period.portfolio_return - cost
+                equity *= Decimal("1") + net
+            return float(equity - Decimal("1"))
+
+        return SampleSplitResult(
+            top_n=top_n,
+            in_sample_periods=len(in_sample),
+            in_sample_return=net_return(in_sample),
+            out_sample_periods=len(out_sample),
+            out_sample_return=net_return(out_sample),
+        )
+
+    async def parameter_sweep(
+        self,
+        symbols: list[str],
+        *,
+        top_n_values: list[int],
+        horizon_days: int = 20,
+        start: datetime | None = None,
+        end: datetime | None = None,
+        cost_rate: float = 0.0,
+    ) -> list[MultiFactorResult]:
+        results: list[MultiFactorResult] = []
+        for top_n in top_n_values:
+            result = await self.backtest(
+                symbols,
+                top_n=top_n,
+                horizon_days=horizon_days,
+                start=start,
+                end=end,
+                cost_rate=cost_rate,
+            )
+            results.append(result)
+        return results
+
+    async def _collect_periods(
+        self,
+        symbols: list[str],
+        *,
+        top_n: int,
+        horizon_days: int,
+        start: datetime | None,
+        end: datetime | None,
+    ) -> list[PeriodResult]:
         end = end or datetime.now().astimezone()
         start = start or (end - timedelta(days=730))
         timestamps = month_end_timestamps(start, end)
@@ -70,8 +191,8 @@ class MultiFactorService:
             if len(closes) >= 80:
                 stock_data[symbol] = (times, closes)
 
-        portfolio_returns: list[Decimal] = []
-        benchmark_returns: list[Decimal] = []
+        periods: list[PeriodResult] = []
+        previous_selected: set[str] = set()
         for timestamp in timestamps:
             rows: dict[str, tuple[dict[str, Decimal], Decimal]] = {}
             for symbol, (times, closes) in stock_data.items():
@@ -108,30 +229,25 @@ class MultiFactorService:
 
             ranked = sorted(rows, key=lambda symbol: scores[symbol], reverse=True)
             selected = ranked[:top_n]
-            portfolio_returns.append(
-                sum(rows[symbol][1] for symbol in selected) / Decimal(len(selected))
+            selected_set = set(selected)
+            turnover = (
+                Decimal(len(previous_selected ^ selected_set)) / Decimal(len(selected))
+                if previous_selected else Decimal("1")
             )
-            benchmark_returns.append(
-                sum(rows[symbol][1] for symbol in rows) / Decimal(len(rows))
+            periods.append(
+                PeriodResult(
+                    timestamp=timestamp,
+                    selected=tuple(selected),
+                    portfolio_return=(
+                        sum(rows[symbol][1] for symbol in selected) / Decimal(len(selected))
+                    ),
+                    benchmark_return=sum(rows[symbol][1] for symbol in rows) / Decimal(len(rows)),
+                    turnover=turnover,
+                )
             )
+            previous_selected = selected_set
 
-        portfolio_equity = _cumulative(portfolio_returns)
-        benchmark_equity = _cumulative(benchmark_returns)
-        years = Decimal(len(portfolio_returns)) / Decimal("12")
-        return MultiFactorResult(
-            periods=len(portfolio_returns),
-            portfolio_return=float(portfolio_equity - Decimal("1")),
-            portfolio_annualized=float(
-                portfolio_equity ** (Decimal("1") / years) - Decimal("1")
-                if years > 0 and portfolio_equity > 0 else Decimal("0")
-            ),
-            portfolio_max_drawdown=float(_max_drawdown(portfolio_returns)),
-            benchmark_return=float(benchmark_equity - Decimal("1")),
-            benchmark_annualized=float(
-                benchmark_equity ** (Decimal("1") / years) - Decimal("1")
-                if years > 0 and benchmark_equity > 0 else Decimal("0")
-            ),
-        )
+        return periods
 
 
 def _cumulative(returns: list[Decimal]) -> Decimal:
